@@ -4,86 +4,270 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>專業 POS 生鮮系統</title>
+
 <style>
 body{margin:0;font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f5f5f5;}
 button{cursor:pointer;outline:none;transition:0.2s;}
 #posApp{display:flex;height:100vh;}
 
-/* 左側分類 */
-#posCategories{width:18%;background:#3498db;padding:15px;color:white;overflow-y:auto;border-radius:0 12px 12px 0;}
-#posCategories h3{margin-top:0;margin-bottom:10px;font-weight:600;}
-#posCategories button{width:100%;margin:5px 0;padding:12px;font-size:0.9em;border:none;border-radius:6px;background:#2980b9;color:white;}
-#posCategories button.active{background:#f1c40f;color:#2c3e50;font-weight:bold;}
+/* =========================
+   分類（左右滑動）
+   ========================= */
+#posCategories{
+  width:20%;
+  background:#3498db;
+  padding:10px;
+  color:white;
+  overflow-x:auto;
+  overflow-y:hidden;
+  white-space:nowrap;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
 
-/* 中間商品 */
-#posProducts{flex:1;padding:15px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;overflow-y:auto;}
-.product-card{background:white;border-radius:12px;padding:5px;box-shadow:0 2px 6px rgba(0,0,0,0.1);display:flex;flex-direction:column;text-align:center;transition:0.2s;cursor:pointer;}
-.product-card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;margin-bottom:5px;}
-.product-card h4{margin:0;font-size:0.85em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.product-card p{margin:2px 0;font-size:0.8em;color:#555;}
+#posCategories button{
+  display:inline-block;
+  width:auto;
+  padding:10px 14px;
+  font-size:0.9rem;
+  border:none;border-radius:20px;
+  background:#2980b9;
+  color:white;
+  margin-right:8px;
+}
 
-/* 右側訂單明細 */
-#posCartContainer{width:25%;background:#f7f7f7;padding:10px;display:flex;flex-direction:column;overflow-y:auto;border-left:2px solid #ddd;}
-#posCartContainer h3{margin-top:0;margin-bottom:10px;}
-#posCart{flex:1;overflow-y:auto;margin-bottom:10px;}
-.cartHeader, #posCart div{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;padding:5px;border-radius:6px;}
-.cartHeader{font-weight:bold;background:#eee;}
-#posCart div{background:#fff;transition:0.2s;}
-#posCart div span{font-size:0.85em;cursor:pointer;}
-#posCart div button{padding:2px 6px;margin-left:2px;font-size:0.8em;background:#27ae60;color:white;border:none;border-radius:4px;}
+#posCategories button.active{
+  background:#f1c40f;color:#2c3e50;
+}
 
-/* 結帳 */
-#posCheckout{width:100%;padding:12px;font-size:1.2em;margin-top:5px;background:#27ae60;color:white;border:none;border-radius:6px;}
+/* =========================
+   商品區
+   ========================= */
+#posProducts{
+  flex:1;padding:15px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+  gap:12px;
+  overflow-y:auto;
+  grid-auto-rows:200px; /* 固定高度 */
+}
 
-/* 數字鍵盤彈窗 */
-#editModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;}
-#editModal .modalContent{background:#fff;padding:20px;border-radius:12px;width:320px;text-align:center;display:flex;flex-direction:column;align-items:center;}
-#editModal h4{margin-bottom:10px;}
-#editModal input{width:80px;text-align:center;font-size:1.3em;margin:5px;border:2px solid #ccc;border-radius:6px;}
-#numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px;}
-#numpad button{padding:15px;font-size:1.2em;background:#3498db;color:white;border:none;border-radius:6px;transition:0.2s;}
-#numpad button:hover{background:#2980b9;}
-.modalActions{display:flex;gap:10px;width:100%;}
-.modalActions button{flex:1;padding:12px;font-size:1em;border:none;border-radius:6px;}
-.modalActions .confirm{background:#27ae60;color:white;}
-.modalActions .cancel{background:#e74c3c;color:white;}
+.product-card{
+  position:relative;
+  background:white;
+  border-radius:12px;
+  padding:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+  display:flex;
+  flex-direction:column;
+  text-align:center;
+  cursor:pointer;
+  transition:0.15s;
+}
+
+.product-card:active{
+  transform:scale(0.96);
+}
+
+/* 釘選 */
+.product-pin{
+  position:absolute;
+  top:6px;right:6px;
+  font-size:20px;
+  color:#ccc;
+  user-select:none;
+}
+.product-pin.active{
+  color:#f1c40f;
+}
+
+/* 促銷 TAG */
+.product-tag{
+  position:absolute;
+  left:6px;top:6px;
+  background:#e74c3c;
+  color:white;
+  padding:2px 6px;
+  font-size:0.75rem;
+  border-radius:6px;
+}
+
+/* 商品圖片正方形 */
+.product-card img{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  border-radius:8px;
+}
+
+.product-card h4{
+  margin:4px 0 0 0;
+  font-size:0.9rem;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.product-card p{
+  margin:2px 0 0 0;
+  color:#666;
+  font-size:0.8rem;
+}
+
+@media(max-width:980px){
+  #posProducts{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));grid-auto-rows:180px;}
+}
+@media(max-width:600px){
+  #posProducts{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));grid-auto-rows:160px;}
+}
+@media(max-width:420px){
+  #posProducts{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));grid-auto-rows:150px;}
+}
+
+/* =========================
+   訂單明細
+   ========================= */
+#posCartContainer{
+  width:28%;
+  background:#f7f7f7;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  border-left:2px solid #ddd;
+}
+
+#posCart{flex:1;overflow-y:auto;}
+
+.cart-item{
+  background:white;
+  border-radius:8px;
+  padding:8px;
+  margin-bottom:10px;
+}
+
+.cart-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.cart-name{
+  font-size:0.95rem;
+  font-weight:600;
+}
+
+.cart-qty{
+  color:#2980b9;
+  cursor:pointer;
+}
+
+.cart-delete{
+  background:#e74c3c;
+  color:white;
+  font-size:0.8rem;
+  padding:2px 6px;
+  border:none;border-radius:4px;
+}
+
+.cart-sub{
+  margin-top:5px;
+  font-size:0.9rem;
+}
+
+/* =========================
+   數字鍵盤彈窗
+   ========================= */
+#editModal{
+  display:none;
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.5);
+  justify-content:center;align-items:center;
+  z-index:9999;
+}
+
+.modalContent{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  width:320px;
+  text-align:center;
+  animation:popup 0.18s ease-out;
+}
+
+@keyframes popup{
+  0%{transform:scale(0.8);opacity:0;}
+  100%{transform:scale(1);opacity:1;}
+}
+
+.modalContent input{
+  width:80px;
+  text-align:center;
+  font-size:1.3em;
+  margin:5px;
+  border:2px solid #ccc;
+  border-radius:6px;
+}
+
+#numpad{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:5px;
+  margin-top:10px;
+}
+
+#numpad button{
+  padding:15px;font-size:1.2em;
+  background:#3498db;color:white;
+  border:none;border-radius:6px;
+}
+
+.modalActions button{
+  padding:12px;
+  border:none;border-radius:6px;
+  font-size:1em;
+  margin-top:10px;
+}
+
+.confirm{background:#27ae60;color:white;}
+.cancel{background:#e74c3c;color:white;}
 </style>
 </head>
+
 <body>
 
 <div id="posApp">
-  <div id="posCategories"><h3>分類</h3></div>
+  
+  <!-- 分類 -->
+  <div id="posCategories"></div>
+
+  <!-- 商品 -->
   <div id="posProducts"></div>
+
+  <!-- 訂單明細 -->
   <div id="posCartContainer">
     <h3>訂單明細</h3>
-    <div class="cartHeader">
-      <span style="flex:3">商品名稱</span>
-      <span style="flex:1;text-align:center">數量</span>
-      <span style="flex:1;text-align:right">單價</span>
-      <span style="flex:1;text-align:right">小計</span>
-    </div>
     <div id="posCart"></div>
-    <p>總額: <span id="posTotal">0</span> 元</p>
-    <select id="posPayment">
-      <option value="現金">現金</option>
-      <option value="信用卡">信用卡</option>
-      <option value="Line Pay">Line Pay</option>
-    </select>
-    <button id="posCheckout">結帳列印</button>
+    <p>總額：<span id="posTotal">0</span> 元</p>
+    <button id="posCheckout">結帳</button>
   </div>
+
 </div>
 
+<!-- 數字鍵盤 -->
 <div id="editModal">
   <div class="modalContent">
     <h4 id="modalProductName">商品名稱</h4>
     <div>
       <label>數量:</label>
-      <input id="modalQty" type="text" readonly value="1">
+      <input id="modalQty" type="text" readonly>
     </div>
     <div>
       <label>單價:</label>
-      <input id="modalPrice" type="text" readonly value="0">
+      <input id="modalPrice" type="text" readonly>
     </div>
+
     <div id="numpad">
       <button onclick="numpadPress('1')">1</button>
       <button onclick="numpadPress('2')">2</button>
@@ -96,169 +280,172 @@ button{cursor:pointer;outline:none;transition:0.2s;}
       <button onclick="numpadPress('9')">9</button>
       <button onclick="numpadPress('0')">0</button>
       <button onclick="numpadBack()">←</button>
+      <button onclick="switchField()">切換</button>
     </div>
-    <div class="modalActions">
-      <button class="confirm" onclick="confirmEdit()">確定</button>
-      <button class="cancel" onclick="closeModal()">取消</button>
-    </div>
+
+    <button class="confirm" onclick="confirmEdit()">確定</button>
+    <button class="cancel" onclick="closeModal()">取消</button>
   </div>
 </div>
 
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbym4u_bE2-YO1kXyBeSIsYWZBpdG_030NL4BVJcwEnebKGF8BSdFe9rSkjZdAaOU_-H/exec"; 
-let products=[], categories=[], posCart=[];
-let editIndex = null;
-let editingField = "qty";
 
-// 取商品
+<script>
+const API_URL="YOUR_API_URL";
+let products=[], categories=[], posCart=[];
+let editIndex=null;
+let editingField="qty";
+
+/* ===========================
+   取得商品資料
+   =========================== */
 async function fetchProducts(){
-  try{
-    const res = await fetch(API_URL+"?action=products");
-    products = await res.json();
-    categories = [...new Set(products.map(p=>p['類別']))].filter(Boolean);
-    renderCategories();
-    if(categories[0]) renderProducts(categories[0]);
-  }catch(e){ console.error("抓取商品失敗:",e); }
+  const res = await fetch(API_URL+"?action=products");
+  products = await res.json();
+  categories=[...new Set(products.map(p=>p['類別']))];
+  renderCategories();
+  renderProducts(categories[0]);
 }
 
-// 顯示分類
+/* ===========================
+   分類按鈕
+   =========================== */
 function renderCategories(){
-  const container = document.getElementById("posCategories");
-  container.innerHTML="<h3>分類</h3>";
+  const el=document.getElementById("posCategories");
+  el.innerHTML="";
   categories.forEach(cat=>{
-    const btn = document.createElement("button");
+    const btn=document.createElement("button");
     btn.textContent=cat;
     btn.onclick=()=>{
       document.querySelectorAll("#posCategories button").forEach(b=>b.classList.remove("active"));
       btn.classList.add("active");
       renderProducts(cat);
     };
-    container.appendChild(btn);
+    el.appendChild(btn);
   });
-  if(container.querySelector("button")) container.querySelector("button").classList.add("active");
+  el.querySelector("button").classList.add("active");
 }
 
-// 顯示商品卡片，點圖片/名稱直接加入
+/* ===========================
+   商品區
+   =========================== */
 function renderProducts(category){
-  const container = document.getElementById("posProducts");
-  container.innerHTML="";
-  products.filter(p=>p['類別']?.trim()===category?.trim()).forEach(p=>{
-    const card = document.createElement("div");
-    card.className="product-card";
-    card.innerHTML=`
-      <img src="${p['商品照片']}" alt="${p['商品名稱']}">
-      <h4 title="${p['商品名稱']}">${p['商品名稱']}</h4>
-      <p>${p['售價']} 元 / ${p['單位']}</p>
-    `;
-    card.querySelector("img").onclick = () => addPOSItem(p);
-    card.querySelector("h4").onclick = () => addPOSItem(p);
-    container.appendChild(card);
+  const box=document.getElementById("posProducts");
+  box.innerHTML="";
+  products
+    .filter(p=>p['類別']===category)
+    .sort((a,b)=>(b.favorite?1:0)-(a.favorite?1:0))
+    .forEach(p=>{
+      const card=document.createElement("div");
+      card.className="product-card";
+      card.innerHTML=`
+        ${p.tag?`<div class="product-tag">${p.tag}</div>`:""}
+        <div class="product-pin ${p.favorite?"active":""}" onclick="toggleFavorite('${p['商品名稱']}');event.stopPropagation();">★</div>
+        <img src="${p['商品照片']}">
+        <h4>${p['商品名稱']}</h4>
+        <p>${p['售價']} 元 / ${p['單位']}</p>
+      `;
+      
+      card.onclick=()=>addItem(p);
+      box.appendChild(card);
+    });
+}
+
+function toggleFavorite(name){
+  const item=products.find(p=>p['商品名稱']===name);
+  item.favorite = !item.favorite;
+  renderProducts(document.querySelector("#posCategories button.active").textContent);
+}
+
+/* ===========================
+   加入訂單
+   =========================== */
+function addItem(p){
+  const exist=posCart.find(i=>i.name===p['商品名稱']);
+  if(exist) exist.qty++;
+  else posCart.push({
+    name:p['商品名稱'],
+    unit:p['單位'],
+    price:Number(p['售價']),
+    qty:1
   });
+  renderCart();
 }
 
-// 加入訂單
-function addPOSItem(product){
-  const exist = posCart.find(p=>p.name===product['商品名稱']);
-  if(exist) exist.quantity++;
-  else posCart.push({name:product['商品名稱'],price:parseInt(product['售價']),quantity:1,unit:product['單位']});
-  renderPOSCart();
-}
-
-// 渲染訂單明細
-function renderPOSCart(){
-  const container = document.getElementById("posCart");
-  container.innerHTML="";
+/* ===========================
+   渲染訂單
+   =========================== */
+function renderCart(){
+  const box=document.getElementById("posCart");
+  box.innerHTML="";
   let total=0;
-  posCart.forEach((item,index)=>{
-    const subtotal = item.price*item.quantity;
-    total+=subtotal;
-    const div = document.createElement("div");
+
+  posCart.forEach((item,idx)=>{
+    const sub=item.qty*item.price;
+    total+=sub;
+
+    const div=document.createElement("div");
+    div.className="cart-item";
     div.innerHTML=`
-      <span style="flex:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name} (${item.unit})</span>
-      <span style="flex:1;text-align:center;">
-        <button onclick="adjustQty(${index},-1)">-</button>
-        <span onclick="openEditModal(${index},'qty')">${item.quantity}</span>
-        <button onclick="adjustQty(${index},1)">+</button>
-      </span>
-      <span style="flex:1;text-align:right;" onclick="openEditModal(${index},'price')">${item.price}</span>
-      <span style="flex:1;text-align:right;">${subtotal}</span>
+      <div class="cart-row">
+        <span class="cart-name">${item.name} x<span class="cart-qty" onclick="openModal(${idx},'qty')">${item.qty}(${item.unit})</span></span>
+        <button class="cart-delete" onclick="deleteItem(${idx})">刪除</button>
+      </div>
+      <div class="cart-sub">小計：${sub}</div>
     `;
-    container.appendChild(div);
+    box.appendChild(div);
   });
+
   document.getElementById("posTotal").textContent=total;
 }
 
-function adjustQty(index,delta){
-  posCart[index].quantity=Math.max(1,posCart[index].quantity+delta);
-  renderPOSCart();
+function deleteItem(i){
+  posCart.splice(i,1);
+  renderCart();
 }
 
-// 數字鍵盤
-function openEditModal(index, field){
-  editIndex = index;
-  editingField = field==="price"?"price":"qty";
-  const item = posCart[index];
-  document.getElementById("modalProductName").textContent = item.name;
-  document.getElementById("modalQty").value = item.quantity;
-  document.getElementById("modalPrice").value = item.price;
-  highlightInput();
-  document.getElementById("editModal").style.display = "flex";
-  document.getElementById(editingField==="qty"?"modalQty":"modalPrice").select();
+/* ===========================
+   數字鍵盤
+   =========================== */
+function openModal(index, field){
+  editIndex=index;
+  editingField=field;
+  const item=posCart[index];
+  document.getElementById("modalProductName").textContent=item.name;
+  document.getElementById("modalQty").value=item.qty;
+  document.getElementById("modalPrice").value=item.price;
+  document.getElementById("editModal").style.display="flex";
 }
 
-function closeModal(){ 
-  document.getElementById("editModal").style.display = "none"; 
-  editIndex=null; 
-  renderPOSCart(); 
+function closeModal(){
+  document.getElementById("editModal").style.display="none";
 }
 
-function highlightInput(){
-  document.getElementById("modalQty").style.border = editingField==="qty"?"2px solid #27ae60":"2px solid #ccc";
-  document.getElementById("modalPrice").style.border = editingField==="price"?"2px solid #27ae60":"2px solid #ccc";
+function switchField(){
+  editingField=editingField==="qty"?"price":"qty";
 }
 
-function numpadPress(num){
-  const input = document.getElementById(editingField==="qty"?"modalQty":"modalPrice");
-  input.value = (input.value==="0"?num:input.value + num);
+function numpadPress(n){
+  const el=document.getElementById(editingField==="qty"?"modalQty":"modalPrice");
+  el.value = (el.value==="0"?n:el.value+n);
 }
 
 function numpadBack(){
-  const input = document.getElementById(editingField==="qty"?"modalQty":"modalPrice");
-  input.value = input.value.slice(0,-1) || "0";
+  const el=document.getElementById(editingField==="qty"?"modalQty":"modalPrice");
+  el.value=el.value.slice(0,-1)||"0";
 }
 
 function confirmEdit(){
-  let qty = parseInt(document.getElementById("modalQty").value);
-  let price = parseInt(document.getElementById("modalPrice").value);
-  if(isNaN(qty)||qty<1) qty=1;
-  if(isNaN(price)||price<0) price=0;
-  posCart[editIndex].quantity=qty;
-  posCart[editIndex].price=price;
+  const q=Number(document.getElementById("modalQty").value);
+  const p=Number(document.getElementById("modalPrice").value);
+  posCart[editIndex].qty=Math.max(1,q);
+  posCart[editIndex].price=Math.max(0,p);
   closeModal();
+  renderCart();
 }
 
-// 結帳
-document.getElementById("posCheckout").onclick = async function(){
-  if(posCart.length===0){ alert("沒有商品"); return; }
-  const totalAmount = posCart.reduce((sum,i)=>sum+i.price*i.quantity,0);
-  const paymentMethod = document.getElementById("posPayment").value;
-  const data = {userId:"POS_User",totalAmount,paymentMethod,items:posCart};
-
-  try{
-    const res = await fetch(API_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(data)
-    });
-    const result = await res.json();
-    if(result.status==="success"){
-      alert("訂單完成，單號：" + result.orderId);
-      posCart=[]; renderPOSCart();
-    } else alert("列印失敗：" + result.message);
-  }catch(e){ alert("結帳失敗:"+e); }
-}
-
-// 初始化
+/* ===========================
+   初始化
+   =========================== */
 fetchProducts();
 </script>
 
