@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS 生鮮蔬果商城</title>
+<style>
+body{font-family:"Microsoft JhengHei",Arial,sans-serif;margin:0;padding:0;background:#f5f5f5;}
+header{background:#7ed6df;color:white;padding:1.2em;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,0.2);}
+header h1{margin:0;font-size:1.6em;}
+header p{margin:0.3em 0 0 0;font-size:0.95em;}
+.container{width:95%;max-width:1200px;margin:1.5em auto;}
+.categories{display:flex;gap:0.4em;flex-wrap:wrap;margin-bottom:1em;justify-content:center;}
+.category-btn{padding:1em 2em;background:#eee;border:none;cursor:pointer;border-radius:20px;transition:0.3s;font-weight:500;font-size:1.1em;}
+.category-btn:hover{background:#7ed6df;color:white;}
+.category-btn.active{background:#7ed6df;color:white;box-shadow:0 2px 5px rgba(0,0,0,0.2);}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.8em;}
+.product-card{background:white;border-radius:8px;padding:1em;box-shadow:0 2px 10px rgba(0,0,0,0.1);display:flex;flex-direction:column;transition:0.3s;position:relative;overflow:hidden;font-size:1em;border:2px solid #ccc;}
+.product-card:hover{transform:translateY(-2px);box-shadow:0 3px 12px rgba(0,0,0,0.2);}
+.product-card img{width:100%;height:140px;object-fit:cover;border-radius:6px;transition:0.3s;}
+.product-card:hover img{transform:scale(1.03);}
+.product-card h3{margin:0.4em 0 0.2em 0;font-size:1.1em;}
+.product-card p{margin:0.2em 0;font-size:0.95em;color:#555;}
+.product-card .price{font-weight:bold;color:#ff6b6b;margin-top:0.4em;}
+.quantity-control {display:flex;align-items:center;gap:10px;margin:0.6em 0;}
+.quantity-control button {width:35px;height:35px;background:#7ed6df;color:#1b1b1b;font-size:1.5em;font-weight:bold;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.18);transition:0.15s;}
+.quantity-control button:active {transform:scale(0.9);}
+.quantity-control span {min-width:40px;height:28px;background:#fff;border:1px solid #bbb;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1em;color:#333;box-shadow:0 2px 4px rgba(0,0,0,0.10);}
+.add-cart {width:50px;height:50px;background:#ff6b6b;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.6em;color:#fff;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.22);transition:0.15s;}
+.add-cart:hover{transform:scale(1.08);}
+.add-cart:active{transform:scale(0.92);}
+.add-cart.active{background:#27ae60;box-shadow:0 3px 12px rgba(0,0,0,0.28);}
+#cartBar{position:fixed;left:0;bottom:0;width:100%;height:70px;background:#ccc;display:flex;align-items:center;font-weight:bold;font-size:1em;z-index:999;padding:0 10px;}
+#cartBar div{display:flex;align-items:center;height:100%;}
+#viewCartBtn{border:none;border-radius:20px;padding:0.5em 1.2em;cursor:pointer;font-weight:bold;background:#fb9d9e;color:white;transition:0.3s;transform:scale(1.2);transform-origin:center;font-size:1.15em;}
+#viewCartBtn:hover{background:#ff4d4d;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:flex-start;padding-top:5%;z-index:9999;}
+.modal-content{background:white;padding:1.5em;border-radius:12px;max-height:90%;overflow-y:auto;width:95%;position:relative;font-size:0.95em;}
+.modal-close{position:absolute;top:10px;right:12px;cursor:pointer;color:red;font-weight:bold;font-size:1.2em;}
+#cartItems div{padding:0.3em 0;border-bottom:1px solid #eee;}
+#cartItems div:last-child{border:none;}
+select,input{width:100%;padding:0.5em;margin:0.2em 0;border-radius:6px;border:1px solid #ccc;font-size:0.95em;}
+button#checkoutBtn {width:100%;padding:0.6em;font-size:1.05em;font-weight:bold;border-radius:8px;border:none;background:#7ed6df;color:white;cursor:pointer;}
+button#checkoutBtn:hover {background:#63c5b5;}
+@media(max-width:600px){.products{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.6em;}.product-card img{height:120px;}.category-btn{padding:0.5em 0.8em;font-size:0.95em;}header h1{font-size:1.4em;}header p{font-size:0.85em;}}
+</style>
+</head>
+<body>
+<header>
+<h1>POS 生鮮蔬果商城</h1>
+<p id="greeting">店員 - POS 模式</p>
+</header>
+
+<div class="container">
+<div class="categories" id="categoryContainer"></div>
+<div class="products" id="productContainer"></div>
+</div>
+
+<div id="cartBar">
+  <div style="flex:1;justify-content:center;">
+    <span id="cartInfo"><strong style="color:black;">訂單小計</strong> <span style="color:red;">0 元</span></span>
+  </div>
+  <div style="flex:1;justify-content:center;">
+    <button id="viewCartBtn">確認結帳</button>
+  </div>
+</div>
+
+<div class="modal" id="cartModal">
+  <div class="modal-content">
+    <span class="modal-close" id="cartClose">&times;</span>
+    <h3>購物車</h3>
+    <div id="cartItems"></div>
+    <p>總額：<span id="cartTotal">0</span> 元</p>
+    <h4>付款方式</h4>
+    <select id="paymentMethod">
+      <option value="現金">現金</option>
+      <option value="信用卡">信用卡</option>
+    </select>
+    <button id="checkoutBtn">結帳並列印</button>
+  </div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbz_VaPxbndfTGn7AD7172q0WnqvqRW4c_corHHSQl4PS8L2xAQbt9vjr7hnGnhijkY/exec";
+let products=[], categories=[], cart=[], userId="POS_01", userName="店員";
+
+// --- 初始化 POS
+document.getElementById("greeting").textContent = `${userName} - POS 模式`;
+
+async function fetchProducts(){
+  try{
+    const res = await fetch(API_URL+"?action=products");
+    products = await res.json();
+    categories = [...new Set(products.map(p => p['類別']))].filter(Boolean);
+    renderCategories();
+    if(categories[0]) renderProducts(categories[0]);
+  }catch(e){ console.error("抓取商品失敗:", e); }
+}
+
+function renderCategories(){
+  const container = document.getElementById("categoryContainer");
+  container.innerHTML="";
+  categories.forEach(cat=>{
+    const btn = document.createElement("button");
+    btn.textContent = cat;
+    btn.className = "category-btn";
+    btn.onclick = ()=>{
+      document.querySelectorAll(".category-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      renderProducts(cat);
+    }
+    container.appendChild(btn);
+  });
+  if(container.firstChild) container.firstChild.classList.add("active");
+}
+
+function renderProducts(category){
+  const container = document.getElementById("productContainer");
+  container.innerHTML="";
+  products.filter(p => p['類別']?.trim()===category?.trim())
+    .forEach(p=>{
+      const idName = encodeURIComponent(p['商品名稱']);
+      const card = document.createElement("div");
+      card.className="product-card";
+      card.innerHTML=`
+        <img src="${p['商品照片']}" alt="${p['商品名稱']}">
+        <h3>${p['商品名稱']}</h3>
+        <p>${p['特色說明']||''}</p>
+        <p>單位：${p['單位']}</p>
+        <p class="price">${p['售價']} 元</p>
+        <p class="quantity-control">
+          <button onclick="changeQty('${idName}',-1)">-</button>
+          <span id="qty-${idName}">1</span>
+          <button onclick="changeQty('${idName}',1)">+</button>
+          <button class="add-cart" onclick="addToCartWithAnimation('${idName}', this)">🛒</button>
+        </p>
+      `;
+      container.appendChild(card);
+    });
+}
+
+function changeQty(idName, delta){
+  const span = document.getElementById(`qty-${idName}`);
+  let qty = parseInt(span.textContent)+delta;
+  if(qty<1) qty=1;
+  span.textContent = qty;
+
+  const name = decodeURIComponent(idName);
+  const existIndex = cart.findIndex(c=>c.name===name);
+  if(existIndex !== -1){ cart[existIndex].quantity = qty; updateCartBar(); }
+}
+
+function addToCartWithAnimation(idName, btn){
+  const name = decodeURIComponent(idName);
+  const qty = parseInt(document.getElementById(`qty-${idName}`).textContent);
+  const product = products.find(p=>p['商品名稱']===name);
+  const existIndex = cart.findIndex(c=>c.name===name);
+
+  if(btn.classList.contains("active")){
+    if(existIndex!==-1) cart.splice(existIndex,1);
+    btn.classList.remove("active");
+  } else {
+    if(existIndex!==-1) cart[existIndex].quantity += qty;
+    else cart.push({name, price:parseInt(product['售價']), quantity:qty, category:product['類別']});
+    btn.classList.add("active");
+  }
+  updateCartBar();
+}
+
+function updateCartBar(){
+  const cartBar = document.getElementById("cartBar");
+  if(cart.length===0){ cartBar.style.display="none"; return; }
+  const totalAmt = cart.reduce((sum,i)=>sum+i.quantity*i.price,0);
+  document.getElementById("cartInfo").innerHTML = `<strong style="color:black;">訂單小計</strong> <span style="color:red;">${totalAmt} 元</span>`;
+  cartBar.style.display="flex";
+}
+
+const cartModal = document.getElementById("cartModal");
+document.getElementById("viewCartBtn").onclick = ()=>{ renderCart(); cartModal.style.display="flex"; }
+document.getElementById("cartClose").onclick = ()=>{ cartModal.style.display="none"; }
+
+function renderCart(){
+  const container=document.getElementById("cartItems");
+  container.innerHTML="";
+  let total=0;
+  cart.forEach(item=>{
+    const subtotal=item.price*item.quantity;
+    total+=subtotal;
+    const div=document.createElement("div");
+    div.textContent=`${item.name} ${item.quantity} x ${item.price} = ${subtotal} 元`;
+    container.appendChild(div);
+  });
+  document.getElementById("cartTotal").textContent=total;
+  updateCartBar();
+}
+
+// --- 結帳並列印
+document.getElementById("checkoutBtn").onclick = async function(){
+  if(cart.length===0){ alert("購物車是空的"); return; }
+  const totalAmount = cart.reduce((sum,i)=>sum+i.price*i.quantity,0);
+  const paymentMethod = document.getElementById("paymentMethod").value;
+
+  const data = { userId, userName, totalAmount, paymentMethod, items:cart };
+
+  // 發送到後端列印
+  const res = await fetch("/pos/printOrder", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(data)
+  });
+
+  const result = await res.json();
+  alert("訂單完成，列印單號：" + result.orderId);
+
+  cart=[];
+  updateCartBar();
+  renderProducts(categories[0]);
+}
+
+fetchProducts();
+</script>
+</body>
+</html>
