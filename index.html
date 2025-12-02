@@ -5,22 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POS 生鮮蔬果系統</title>
 <style>
-body{margin:0;font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f5f5f5;}
-button{cursor:pointer;}
-/* --- POS 介面布局 --- */
+body, html{margin:0;padding:0;height:100%;font-family:"Microsoft JhengHei",Arial,sans-serif;overflow:hidden;background:#f5f5f5;}
+button{cursor:pointer;outline:none;}
 #posApp{display:flex;height:100vh;}
+
+/* 左側分類 */
 #posCategories{width:15%;background:#eee;padding:10px;overflow-y:auto;}
-#posCategories button{width:100%;margin:5px 0;padding:10px;font-size:1em;border:none;border-radius:6px;transition:0.2s;}
+#posCategories h3{margin-top:0;}
+#posCategories button{width:100%;margin:5px 0;padding:15px;font-size:1.1em;border:none;border-radius:6px;transition:0.2s;}
 #posCategories button.active{background:#7ed6df;color:white;}
+
+/* 中間商品區 */
 #posProducts{flex:1;padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;overflow-y:auto;}
 .product-card{background:white;border-radius:8px;padding:5px;box-shadow:0 2px 6px rgba(0,0,0,0.1);display:flex;flex-direction:column;transition:0.2s;text-align:center;}
 .product-card img{width:100%;height:100px;object-fit:cover;border-radius:6px;margin-bottom:5px;transition:0.2s;}
 .product-card:hover img{transform:scale(1.05);}
+.product-card button{font-size:1em;padding:8px;border:none;border-radius:6px;background:#27ae60;color:white;margin-top:auto;}
+
+/* 右側訂單明細 */
 #posCartContainer{width:25%;background:#f7f7f7;padding:10px;display:flex;flex-direction:column;overflow-y:auto;}
+#posCartContainer h3{margin-top:0;}
 #posCart{flex:1;overflow-y:auto;margin-bottom:10px;}
-#posCart div{display:flex;justify-content:space-between;margin-bottom:5px;background:#fff;padding:5px;border-radius:6px;}
-#posCart div button{background:#ff6b6b;color:white;border:none;border-radius:4px;padding:2px 6px;font-size:0.8em;}
-#posCheckout{width:100%;padding:10px;font-size:1.2em;margin-top:5px;background:#27ae60;color:white;border:none;border-radius:6px;}
+#posCart div{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;background:#fff;padding:5px;border-radius:6px;font-size:1em;}
+#posCart div span{margin:0 5px;}
+#posCart div button{background:#ff6b6b;color:white;border:none;border-radius:4px;padding:2px 6px;font-size:0.9em;}
+.qtyControl{display:flex;align-items:center;gap:5px;}
+.qtyControl button{width:28px;height:28px;font-size:1.1em;background:#7ed6df;color:#000;border:none;border-radius:4px;line-height:1;}
+
+/* 結帳按鈕 */
+#posCheckout{width:100%;padding:15px;font-size:1.2em;margin-top:5px;background:#27ae60;color:white;border:none;border-radius:6px;}
+
+/* POS 觸控優化 */
+#posProducts, #posCartContainer, #posCategories{
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 </style>
 </head>
 <body>
@@ -109,6 +132,13 @@ function removePOSItem(index){
   renderPOSCart();
 }
 
+// 調整商品數量
+function changeQty(index, delta){
+  posCart[index].quantity += delta;
+  if(posCart[index].quantity<1) posCart[index].quantity=1;
+  renderPOSCart();
+}
+
 // 渲染訂單明細
 function renderPOSCart(){
   const container = document.getElementById("posCart");
@@ -118,10 +148,20 @@ function renderPOSCart(){
     const subtotal=item.price*item.quantity;
     total+=subtotal;
     const div = document.createElement("div");
-    div.innerHTML=`<span>${item.name} x ${item.quantity}</span><span>${subtotal} 元</span><button onclick="removePOSItem(${index})">刪除</button>`;
+    div.innerHTML=`
+      <span>${item.name}</span>
+      <span class="qtyControl">
+        <button onclick="changeQty(${index},-1)">-</button>
+        ${item.quantity}
+        <button onclick="changeQty(${index},1)">+</button>
+      </span>
+      <span>${subtotal} 元</span>
+      <button onclick="removePOSItem(${index})">刪除</button>
+    `;
     container.appendChild(div);
   });
   document.getElementById("posTotal").textContent=total;
+  container.scrollTop = container.scrollHeight;
 }
 
 // 結帳列印
@@ -150,4 +190,5 @@ fetchProducts();
 </script>
 </body>
 </html>
+
 
