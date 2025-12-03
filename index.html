@@ -5,139 +5,301 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>專業 POS 生鮮系統</title>
 <style>
-body{margin:0;font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f5f5f5;}
-button{cursor:pointer;outline:none;transition:0.2s;}
-#posApp{display:flex;height:100vh;}
+body {
+  margin: 0;
+  font-family: "Microsoft JhengHei", Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+button {
+  cursor: pointer;
+  outline: none;
+  transition: 0.2s;
+}
+
+#posApp {
+  display: flex;
+  height: 100vh;
+}
 
 /* 左側分類 */
-#posCategories{width:18%;background:#3498db;padding:15px;color:white;overflow-y:auto;border-radius:0 12px 12px 0;}
-#posCategories h3{margin-top:0;margin-bottom:10px;font-weight:600;}
-#posCategories button{width:100%;margin:5px 0;padding:12px;font-size:0.9em;border:none;border-radius:6px;background:#2980b9;color:white;}
-#posCategories button.active{background:#f1c40f;color:#2c3e50;font-weight:bold;}
-
-/* 中間商品 */
-#posProducts{
-  flex:1;
-  padding:15px 0 15px 5%;
-  display:grid;
-  grid-template-columns:repeat(auto-fill, 120px);
-  row-gap:15px;      /* 上下間距固定 */
-  column-gap:15px;   /* 左右間距固定 */
-  justify-content:start;  /* 左對齊 */
-  align-content:start;    /* 避免上下間距自動拉高 */
-  grid-auto-rows:200px;   /* 每行高度固定 */
-  overflow-y:auto;
+#posCategories {
+  width: 18%;
+  background: #3498db;
+  padding: 15px;
+  color: white;
+  overflow-y: auto;
+  border-radius: 0 12px 12px 0;
 }
 
-.product-card{
-  background:white;
-  border-radius:12px;
-  padding:5px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
-  display:flex;
-  flex-direction:column;
-  text-align:center;
-  transition:0.3s;
-  cursor:pointer;
-  width:120px;
-  height:200px;  /* 固定高度 */
-  overflow:hidden; /* 避免文字拉高卡片 */
+#posCategories h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-weight: 600;
 }
 
-.product-card:hover{
-  transform:translateY(-5px);
-  box-shadow:0 6px 12px rgba(0,0,0,0.15);
+#posCategories button {
+  width: 100%;
+  margin: 5px 0;
+  padding: 12px;
+  font-size: 0.9em;
+  border: none;
+  border-radius: 6px;
+  background: #2980b9;
+  color: white;
 }
 
-.product-card img{
-  width:100%;
-  aspect-ratio:1/1;
-  object-fit:cover;
-  border-radius:8px;
-  margin-bottom:5px;
+#posCategories button.active {
+  background: #f1c40f;
+  color: #2c3e50;
+  font-weight: bold;
 }
 
-.product-card h4,
+/* 中間商品區塊 */
+#posProducts {
+  flex: 1;
+  padding: 15px 0 15px 5%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 120px);
+  row-gap: 15px;       /* 上下間距固定 */
+  column-gap: 15px;    /* 左右間距固定 */
+  justify-content: start;
+  align-content: start;
+  grid-auto-rows: 200px; /* 每行高度固定 */
+  overflow-y: auto;
+}
+
+.product-card {
+  background: white;
+  border-radius: 12px;
+  padding: 5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  transition: 0.3s;
+  cursor: pointer;
+  width: 120px;
+  height: 200px;      /* 固定高度 */
+  overflow: hidden;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Flex 讓上下間距均勻 */
+.product-card .card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.product-card img {
+  width: 100%;
+  height: 100px;           /* 固定圖片高度 */
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.product-card h4 {
+  margin: 5px 0 2px 0;
+  font-size: 0.7em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .product-card p {
-  margin:2px 0;
-  font-size:0.8em;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  margin: 0;
+  font-size: 0.75em;
+  color: #555;
 }
 
 /* 右側訂單明細 */
-#posCartContainer{
-    width:25%;
-    background:#f7f7f7;
-    padding:10px;
-    display:flex;
-    flex-direction:column;
-    overflow-y:auto;
-    border-left:2px solid #ddd;
-    min-height:400px;
+#posCartContainer {
+  width: 25%;
+  background: #f7f7f7;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-left: 2px solid #ddd;
+  min-height: 400px;
 }
-.cartHeader{
-    font-weight:bold;
-    background:#eee;
-    white-space:nowrap;
-    font-size:85%;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:5px;
-    padding:5px;
-    border-radius:6px;
+
+.cartHeader {
+  font-weight: bold;
+  background: #eee;
+  font-size: 85%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  padding: 5px;
+  border-radius: 6px;
 }
-#posCart div{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:5px;
-    padding:5px;
-    border-radius:6px;
-    background:#fff;
-    transition:0.2s;
-    font-size:0.7em;
-    min-height:40px; /* 高度統一 */
+
+#posCart div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  padding: 5px;
+  border-radius: 6px;
+  background: #fff;
+  transition: 0.2s;
+  font-size: 0.7em;
+  min-height: 40px;
 }
-#posCart div span.name{flex:3; white-space:normal; word-break:break-word;}
+
+#posCart div span.name {
+  flex: 3;
+  white-space: normal;
+  word-break: break-word;
+}
+
 #posCart div span.qty,
 #posCart div span.price,
 #posCart div span.subtotal,
-#posCart div span.remove{flex:1.25; text-align:center;}
-#posCart div span.price,
-#posCart div span.subtotal{text-align:right;}
-#posCart div span.remove button{
-    padding:2px 6px;
-    font-size:0.7em;
-    border-radius:6px;
-    background:#e74c3c;
-    color:white;
-    border:none;
+#posCart div span.remove {
+  flex: 1.25;
+  text-align: center;
 }
-#posCartContainer p{font-size:1.2em; font-weight:bold;}
-#posCheckout{width:100%;padding:12px;font-size:1.2em;margin-top:5px;background:#27ae60;color:white;border:none;border-radius:6px;}
+
+#posCart div span.price,
+#posCart div span.subtotal {
+  text-align: right;
+}
+
+#posCart div span.remove button {
+  padding: 2px 6px;
+  font-size: 0.7em;
+  border-radius: 6px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+}
+
+#posCartContainer p {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* 顯示總數量、總項目數 */
+#posSummary {
+  font-size: 0.9em;
+  margin-bottom: 5px;
+  text-align: center;
+  color: #333;
+}
+
+#posCheckout {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.2em;
+  margin-top: 5px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
 
 /* 數字鍵盤彈窗 */
-#editModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;}
-#editModal .modalContent{background:#fff;padding:20px;border-radius:12px;width:320px;text-align:center;display:flex;flex-direction:column;align-items:center;}
-#editModal h4{margin-bottom:10px;}
-#editModal input{width:80px;text-align:center;font-size:1.3em;margin:5px;border:2px solid #ccc;border-radius:6px;}
-#numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px;}
-#numpad button{padding:15px;font-size:1.2em;background:#3498db;color:white;border:none;border-radius:6px;transition:0.2s;}
-#numpad button:hover{background:#2980b9;}
-.modalActions{display:flex;gap:10px;width:100%;}
-.modalActions button{flex:1;padding:12px;font-size:1em;border:none;border-radius:6px;}
-.modalActions .confirm{background:#27ae60;color:white;}
-.modalActions .cancel{background:#e74c3c;color:white;}
+#editModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#editModal .modalContent {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 320px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#editModal h4 {
+  margin-bottom: 10px;
+}
+
+#editModal input {
+  width: 80px;
+  text-align: center;
+  font-size: 1.3em;
+  margin: 5px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+}
+
+#numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+#numpad button {
+  padding: 15px;
+  font-size: 1.2em;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+#numpad button:hover {
+  background: #2980b9;
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.modalActions button {
+  flex: 1;
+  padding: 12px;
+  font-size: 1em;
+  border: none;
+  border-radius: 6px;
+}
+
+.modalActions .confirm {
+  background: #27ae60;
+  color: white;
+}
+
+.modalActions .cancel {
+  background: #e74c3c;
+  color: white;
+}
 </style>
 </head>
 <body>
 
 <div id="posApp">
   <div id="posCategories"><h3>分類</h3></div>
+
   <div id="posProducts"></div>
+
   <div id="posCartContainer">
     <h3 style="font-size:85%; white-space:nowrap;">訂單明細</h3>
     <div class="cartHeader">
@@ -148,7 +310,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
       <span style="flex:1.25;text-align:center">刪除</span>
     </div>
     <div id="posCart"></div>
-    <p>總額: <span id="posTotal">0</span></p>
+    <div id="posSummary">共 0 項 | 總數量 0 | 總額 0 元</div>
     <select id="posPayment">
       <option value="現金">現金</option>
       <option value="信用卡">信用卡</option>
@@ -158,6 +320,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   </div>
 </div>
 
+<!-- 數字鍵盤彈窗 -->
 <div id="editModal">
   <div class="modalContent">
     <h4 id="modalProductName">商品名稱</h4>
@@ -186,7 +349,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 </div>
 
 <script>
-// 商品資料與訂單功能
+// ===== JavaScript 功能 =====
 const API_URL = "https://script.google.com/macros/s/AKfycbym4u_bE2-YO1kXyBeSIsYWZBpdG_030NL4BVJcwEnebKGF8BSdFe9rSkjZdAaOU_-H/exec"; 
 let products=[], categories=[], posCart=[];
 let editIndex = null;
@@ -225,9 +388,11 @@ function renderProducts(category){
     const card = document.createElement("div");
     card.className="product-card";
     card.innerHTML=`
-      <img src="${p['商品照片']}" alt="${p['商品名稱']}">
-      <h4 title="${p['商品名稱']}">${p['商品名稱']}</h4>
-      <p>${p['售價']} 元 / ${p['單位']}</p>
+      <div class="card-content">
+        <img src="${p['商品照片']}" alt="${p['商品名稱']}">
+        <h4 title="${p['商品名稱']}">${p['商品名稱']}</h4>
+        <p>${p['售價']} 元 / ${p['單位']}</p>
+      </div>
     `;
     card.onclick = () => addPOSItem(p);
     container.appendChild(card);
@@ -244,8 +409,7 @@ function addPOSItem(product){
 function renderPOSCart(){
   const container = document.getElementById("posCart");
   container.innerHTML="";
-  let total=0;
-  let totalQty=0;
+  let total=0, totalQty=0;
   posCart.forEach((item,index)=>{
     const subtotal = item.price*item.quantity;
     total+=subtotal;
@@ -260,10 +424,7 @@ function renderPOSCart(){
     `;
     container.appendChild(div);
   });
-
-  // 顯示共 N 項 | 總數量 | 總金額
-  const totalItems = posCart.length;
-  document.getElementById("posTotal").textContent = `共 ${totalItems} 項 | 總數量 ${totalQty} | ${total} 元`;
+  document.getElementById("posSummary").textContent=`共 ${posCart.length} 項 | 總數量 ${totalQty} | 總額 ${total} 元`;
 }
 
 function openEditModal(index, field){
