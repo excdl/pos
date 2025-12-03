@@ -22,8 +22,8 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   display:grid;
   grid-template-columns:repeat(auto-fill, 120px);
   justify-content:start;
-  row-gap:15px;
-  column-gap:calc(10px + 3%);
+  row-gap:15px;  /* 上下間距固定 */
+  column-gap:15px; /* 左右間距固定 */
   overflow-y:auto;
 }
 .product-card{
@@ -37,7 +37,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   transition:0.3s;
   cursor:pointer;
   width:120px;
-  height:200px;
+  height:200px;  /* 固定高度，不因內容增長而拉高 */
 }
 .product-card:hover{
   transform:translateY(-5px);
@@ -58,8 +58,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     border-left:2px solid #ddd;
     min-height:400px;
 }
-
-/* 標題列 */
 .cartHeader{
     font-weight:bold;
     background:#eee;
@@ -72,8 +70,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     padding:5px;
     border-radius:6px;
 }
-
-/* 商品列表內容 */
 #posCart div{
     display:flex;
     justify-content:space-between;
@@ -86,19 +82,11 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     font-size:0.7em;
     min-height:40px; /* 高度統一 */
 }
-#posCart div span.name{
-    flex:3; 
-    white-space:normal; /* 自動換行 */
-    word-break:break-word;
-}
+#posCart div span.name{flex:3; white-space:normal; word-break:break-word;}
 #posCart div span.qty,
 #posCart div span.price,
 #posCart div span.subtotal,
-#posCart div span.remove{
-    flex:1.25;
-    text-align:center;
-}
-#posCart div span.qty{cursor:pointer;}
+#posCart div span.remove{flex:1.25; text-align:center;}
 #posCart div span.price,
 #posCart div span.subtotal{text-align:right;}
 #posCart div span.remove button{
@@ -109,14 +97,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     color:white;
     border:none;
 }
-
-/* 總額 */
-#posCartContainer p{
-    font-size:1.2em;
-    font-weight:bold;
-}
-
-/* 結帳 */
+#posCartContainer p{font-size:1.2em; font-weight:bold;}
 #posCheckout{width:100%;padding:12px;font-size:1.2em;margin-top:5px;background:#27ae60;color:white;border:none;border-radius:6px;}
 
 /* 數字鍵盤彈窗 */
@@ -186,6 +167,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 </div>
 
 <script>
+// 商品資料與訂單功能同前面程式碼
 const API_URL = "https://script.google.com/macros/s/AKfycbym4u_bE2-YO1kXyBeSIsYWZBpdG_030NL4BVJcwEnebKGF8BSdFe9rSkjZdAaOU_-H/exec"; 
 let products=[], categories=[], posCart=[];
 let editIndex = null;
