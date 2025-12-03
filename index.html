@@ -176,15 +176,14 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   <canvas id="qr2"></canvas>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzz3Bsm8ntNDmFkHbNFlDzQJoIWChz2j8O5LVhv4sAx1iaXM1jBhJhZT5xEN4I9DF-6/exec";
-let products=[], categories=[], posCart=[];
-let currentTax="內含稅", editIndex=null, editingField=null, editingDiscount=false;
+let products = [], categories = [], posCart = [];
+let currentTax = "應稅", editIndex = null, editingField = null, editingDiscount = false;
 
-// -------------------- 載入商品 --------------------
+// 載入商品資料
 async function fetchProducts(){
-  const res = await fetch(API_URL+"?action=products");
+  const res = await fetch(API_URL + "?action=products");
   products = await res.json();
   categories = [...new Set(products.map(x=>x["類別"]))];
   renderCategories();
