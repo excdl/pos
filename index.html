@@ -7,7 +7,7 @@
 <style>
 body{margin:0;font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f5f5f5;}
 button{cursor:pointer;outline:none;transition:0.2s;}
-#posApp{display:flex;height:100vh;flex-wrap:wrap;}
+#posApp{display:flex;height:100vh;}
 
 /* 左側分類 */
 #posCategories{width:18%;background:#3498db;padding:15px;color:white;overflow-y:auto;border-radius:0 12px 12px 0;}
@@ -20,10 +20,12 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   flex:1;
   padding:15px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,120px); /* 固定寬度 */
-  justify-content:start; /* 固定間距，不撐滿 */
-  gap:10px; /* 固定間距 */
+  grid-template-columns:repeat(auto-fill,120px);
+  justify-content:start;
+  row-gap:10px;           /* 上下間距固定 */
+  column-gap:calc(10px + 3%); /* 左右間距增加3% */
   overflow-y:auto;
+  padding-left:5%;        /* 左側加寬5% */
 }
 .product-card{
   background:white;
@@ -35,63 +37,44 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   text-align:center;
   transition:0.3s;
   cursor:pointer;
-  width:120px;  /* 固定寬度 */
+  width:120px;
   height:200px; /* 固定高度 */
 }
 .product-card:hover{
-  transform:scale(1.05);
+  transform:translateY(-5px);
+  box-shadow:0 6px 12px rgba(0,0,0,0.15);
 }
-.product-card img{
-  width:100%;
-  aspect-ratio:1/1;
-  object-fit:cover;
-  border-radius:8px;
-  margin-bottom:5px;
-}
-/* 商品名稱縮小 30% */
-.product-card h4{
-  margin:0;
-  font-size:0.6em;
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-  word-break:break-word;
-  text-align:center;
-}
-.product-card p{
-  margin:2px 0;
-  font-size:0.8em;
-  color:#555;
-}
+.product-card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;margin-bottom:5px;}
+.product-card h4{margin:0;font-size:0.6em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} /* 名稱縮小30% */
+.product-card p{margin:2px 0;font-size:0.8em;color:#555;}
 
 /* 右側訂單明細 */
 #posCartContainer{
-  width:25%;
-  background:#f7f7f7;
-  padding:10px;
-  display:flex;
-  flex-direction:column;
-  overflow-y:auto;
-  border-left:2px solid #ddd;
-  min-height:400px;
+    width:25%;
+    background:#f7f7f7;
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+    border-left:2px solid #ddd;
+    min-height:400px;
 }
 
-/* 標題列 */
+/* 標題列（不換行 + 字體縮小15%） */
 .cartHeader{
-  font-weight:bold;
-  background:#eee;
-  white-space:nowrap;
-  font-size:85%;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:5px;
-  padding:5px;
-  border-radius:6px;
+    font-weight:bold;
+    background:#eee;
+    white-space:nowrap;
+    font-size:85%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:5px;
+    padding:5px;
+    border-radius:6px;
 }
 
-/* 商品列 */
+/* 商品列表內容 */
 #posCart div{
     display:flex;
     justify-content:space-between;
@@ -101,61 +84,43 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     border-radius:6px;
     background:#fff;
     transition:0.2s;
+    font-size:0.7em; /* 文字縮小30% */
 }
-/* 商品名稱 */
-#posCart div span.name{
+#posCart div span:first-child{
     flex:3;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;  
-    overflow:hidden;
-    word-break:break-word;
     white-space:normal;
-    font-size:0.7em; /* 縮小 30% */
+    word-break:break-word;
 }
-
-/* 數量欄 */
 #posCart div span.qty{
     flex:1;
     text-align:center;
     display:flex;
     justify-content:center;
     align-items:center;
-    gap:2px;
 }
 #posCart div span.qty button{
-    white-space:nowrap;
     padding:2px 6px;
-    font-size:0.8em;
-    background:#27ae60;
-    color:white;
-    border:none;
-    border-radius:4px;
-    cursor:pointer;
+    margin:0 2px;
+    white-space:nowrap; /* +- 不換行 */
 }
-
-/* 單價與小計 */
-#posCart div span.price, #posCart div span.total{
+#posCart div span.price, #posCart div span.subtotal{
     flex:1;
     text-align:right;
-    font-size:0.85em;
 }
-
-/* 刪除按鈕 */
-#posCart div span.del{
-    flex:0.8;
-    text-align:center;
-}
-#posCart div span.del button{
-    font-size:0.8em; /* 縮小 20% */
-    padding:3px 6px;
-    border-radius:8px; /* 圓角 */
+#posCart div span.remove button{
+    padding:2px 6px;
+    font-size:0.7em; /* 縮小20% */
+    border-radius:6px; /* 圓角 */
     background:#e74c3c;
     color:white;
+    border:none;
 }
 
-/* 總額加大 20% */
-#posTotal{font-size:120%; font-weight:bold;}
+/* 總額 */
+#posCartContainer p{
+    font-size:1.2em; /* 放大20% */
+    font-weight:bold;
+}
 
 /* 結帳 */
 #posCheckout{width:100%;padding:12px;font-size:1.2em;margin-top:5px;background:#27ae60;color:white;border:none;border-radius:6px;}
@@ -227,10 +192,11 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 </div>
 
 <script>
+// 這裡保留原 POS JS 邏輯，與之前程式碼一致
 const API_URL = "https://script.google.com/macros/s/AKfycbym4u_bE2-YO1kXyBeSIsYWZBpdG_030NL4BVJcwEnebKGF8BSdFe9rSkjZdAaOU_-H/exec"; 
 let products=[], categories=[], posCart=[];
 let editIndex = null;
-let editingField = "qty"; 
+let editingField = "qty";
 
 async function fetchProducts(){
   try{
@@ -267,7 +233,7 @@ function renderProducts(category){
     card.innerHTML=`
       <img src="${p['商品照片']}" alt="${p['商品名稱']}">
       <h4 title="${p['商品名稱']}">${p['商品名稱']}</h4>
-      <p>${p['售價']} 元</p>
+      <p>${p['售價']} 元 / ${p['單位']}</p>
     `;
     card.onclick = () => addPOSItem(p);
     container.appendChild(card);
@@ -290,15 +256,15 @@ function renderPOSCart(){
     total+=subtotal;
     const div = document.createElement("div");
     div.innerHTML=`
-      <span class="name">${item.name}</span>
+      <span>${item.name}</span>
       <span class="qty">
         <button onclick="adjustQty(${index},-1)">-</button>
         <span onclick="openEditModal(${index},'qty')">${item.quantity}</span>
         <button onclick="adjustQty(${index},1)">+</button>
       </span>
       <span class="price" onclick="openEditModal(${index},'price')">${item.price}</span>
-      <span class="total">${subtotal}</span>
-      <span class="del"><button onclick="removePOSItem(${index})">🗑️</button></span>
+      <span class="subtotal">${subtotal}</span>
+      <span class="remove"><button onclick="removePOSItem(${index})">🗑</button></span>
     `;
     container.appendChild(div);
   });
@@ -357,7 +323,6 @@ document.getElementById("posCheckout").onclick = async function(){
   const totalAmount = posCart.reduce((sum,i)=>sum+i.price*i.quantity,0);
   const paymentMethod = document.getElementById("posPayment").value;
   const data = {userId:"POS_User",totalAmount,paymentMethod,items:posCart};
-
   try{
     const res = await fetch(API_URL,{
       method:"POST",
@@ -376,7 +341,6 @@ fetchProducts();
 </script>
 </body>
 </html>
-
 
 
 
