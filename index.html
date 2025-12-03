@@ -7,7 +7,7 @@
 <style>
 body{margin:0;font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f5f5f5;}
 button{cursor:pointer;outline:none;transition:0.2s;}
-#posApp{display:flex;height:100vh;}
+#posApp{display:flex;height:100vh;flex-wrap:wrap;}
 
 /* 左側分類 */
 #posCategories{width:18%;background:#3498db;padding:15px;color:white;overflow-y:auto;border-radius:0 12px 12px 0;}
@@ -15,92 +15,93 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 #posCategories button{width:100%;margin:5px 0;padding:12px;font-size:0.9em;border:none;border-radius:6px;background:#2980b9;color:white;}
 #posCategories button.active{background:#f1c40f;color:#2c3e50;font-weight:bold;}
 
-/* 中間商品區 */
+/* 中間商品 */
 #posProducts{
-    flex:1;
-    padding:15px;
-    display:flex;
-    flex-wrap:wrap;           
-    gap:10px;
-    overflow-y:auto;
-    align-content:flex-start;
+  flex:1;
+  padding:15px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:10px;
+  overflow-y:auto;
 }
-
-/* 商品卡 */
 .product-card{
-    width:120px;               
-    background:white;
-    border-radius:12px;
-    padding:5px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-    display:flex;
-    flex-direction:column;
-    text-align:center;
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor:pointer;
-    flex-shrink:0;             
+  background:white;
+  border-radius:12px;
+  padding:5px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+  display:flex;
+  flex-direction:column;
+  text-align:center;
+  transition:0.3s;
+  cursor:pointer;
+  height:220px;       /* 統一高度 */
 }
-
-/* 商品圖片 */
-.product-card img{
-    width:100%;
-    height:100px;             
-    object-fit:cover;
-    border-radius:8px;
-    margin-bottom:5px;
-}
-
-/* 商品標題 */
-.product-card h4{
-    margin:0;
-    font-size:0.85em;
-    word-break:break-word;
-}
-
-/* 商品描述 / 價格 */
-.product-card p{
-    margin:2px 0;
-    font-size:0.8em;
-    color:#555;
-}
-
-/* hover 動畫 */
 .product-card:hover{
-    transform: scale(1.05);
-    box-shadow:0 4px 12px rgba(0,0,0,0.2);
+  transform:scale(1.05);
+}
+.product-card img{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  border-radius:8px;
+  margin-bottom:5px;
+}
+
+/* 商品卡名稱自動縮放文字，最多兩行 */
+.product-card h4{
+  margin:0;
+  font-size:clamp(0.65em,2vw,0.85em); /* 自動縮放 */
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  word-break:break-word;
+  text-align:center;
+}
+.product-card p{
+  margin:2px 0;
+  font-size:0.8em;
+  color:#555;
 }
 
 /* 右側訂單明細 */
 #posCartContainer{
-    width:25%;
-    background:#f7f7f7;
-    padding:10px;
-    display:flex;
-    flex-direction:column;
-    overflow-y:auto;
-    border-left:2px solid #ddd;
-    min-height:400px;
+  width:25%;
+  background:#f7f7f7;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  overflow-y:auto;
+  border-left:2px solid #ddd;
+  min-height:400px;
 }
 
 /* 標題列（不換行 + 字體縮小15%） */
 .cartHeader{
-    font-weight:bold;
-    background:#eee;
-    white-space:nowrap;
-    font-size:85%;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:5px;
-    padding:5px;
-    border-radius:6px;
+  font-weight:bold;
+  background:#eee;
+  white-space:nowrap;
+  font-size:85%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:5px;
+  padding:5px;
+  border-radius:6px;
+}
+
+/* 訂單明細文字縮小30% */
+#posCartContainer p,
+#posCartContainer span,
+#posCartContainer .cartHeader span{
+    font-size:70%;
 }
 
 /* 商品列 */
 #posCart div{
     display:flex;
     justify-content:space-between;
-    align-items:flex-start;
+    align-items:center;
     margin-bottom:5px;
     padding:5px;
     border-radius:6px;
@@ -108,17 +109,37 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     transition:0.2s;
 }
 
-/* 商品名稱允許換行 */
+/* 商品名稱最多 2 行，自動換行，超出省略 */
 #posCart div span.name{
     flex:3;
-    white-space:normal;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;  
+    overflow:hidden;
     word-break:break-word;
+    white-space:normal;
+    font-size:clamp(0.6em,2vw,0.85em); /* 自動縮放文字 */
 }
 
 /* 數量欄 */
 #posCart div span.qty{
     flex:1;
     text-align:center;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:2px;
+}
+/* +- 按鈕不換行 */
+#posCart div span.qty button{
+    white-space:nowrap;
+    padding:2px 6px;
+    font-size:0.8em;
+    background:#27ae60;
+    color:white;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
 }
 
 /* 單價靠右 */
@@ -133,38 +154,19 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     text-align:right;
 }
 
-/* 刪除 */
+/* 刪除按鈕 ICON */
 #posCart div span.del{
     flex:0.8;
     text-align:center;
 }
-
-#posCart div span{
-    font-size:0.85em;
-    cursor:pointer;
-}
-
-#posCart div button{
-    padding:2px 6px;
-    margin-left:2px;
-    font-size:0.8em;
-    background:#27ae60;
-    color:white;
-    border:none;
-    border-radius:4px;
+#posCart div span.del button{
+    font-size:1em;
+    padding:4px 6px;
+    background:#e74c3c;
 }
 
 /* 結帳 */
-#posCheckout{
-    width:100%;
-    padding:12px;
-    font-size:1.2em;
-    margin-top:5px;
-    background:#27ae60;
-    color:white;
-    border:none;
-    border-radius:6px;
-}
+#posCheckout{width:100%;padding:12px;font-size:1.2em;margin-top:5px;background:#27ae60;color:white;border:none;border-radius:6px;}
 
 /* 數字鍵盤彈窗 */
 #editModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;}
@@ -178,6 +180,15 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 .modalActions button{flex:1;padding:12px;font-size:1em;border:none;border-radius:6px;}
 .modalActions .confirm{background:#27ae60;color:white;}
 .modalActions .cancel{background:#e74c3c;color:white;}
+
+/* 響應式手機版 */
+@media screen and (max-width:768px){
+  #posApp{flex-direction:column;}
+  #posCategories{width:100%;border-radius:0;}
+  #posProducts{width:100%;padding:10px;}
+  #posCartContainer{width:100%;border-left:none;border-top:2px solid #ddd;}
+  #posCartContainer p, #posCartContainer select, #posCartContainer button{font-size:80%;}
+}
 </style>
 </head>
 <body>
@@ -236,9 +247,8 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 const API_URL = "https://script.google.com/macros/s/AKfycbym4u_bE2-YO1kXyBeSIsYWZBpdG_030NL4BVJcwEnebKGF8BSdFe9rSkjZdAaOU_-H/exec"; 
 let products=[], categories=[], posCart=[];
 let editIndex = null;
-let editingField = "qty";
+let editingField = "qty"; 
 
-// 抓商品
 async function fetchProducts(){
   try{
     const res = await fetch(API_URL+"?action=products");
@@ -249,7 +259,6 @@ async function fetchProducts(){
   }catch(e){ console.error("抓取商品失敗:",e); }
 }
 
-// 顯示分類
 function renderCategories(){
   const container = document.getElementById("posCategories");
   container.innerHTML="<h3>分類</h3>";
@@ -266,7 +275,6 @@ function renderCategories(){
   if(container.querySelector("button")) container.querySelector("button").classList.add("active");
 }
 
-// 顯示商品卡
 function renderProducts(category){
   const container = document.getElementById("posProducts");
   container.innerHTML="";
@@ -281,30 +289,8 @@ function renderProducts(category){
     card.onclick = () => addPOSItem(p);
     container.appendChild(card);
   });
-  setProductCardHeight();
 }
 
-// 設置每行商品卡等高
-function setProductCardHeight(){
-  const container = document.getElementById('posProducts');
-  const cards = Array.from(container.children);
-  if(cards.length === 0) return;
-  let rowTop = null, rowCards=[], maxHeight=0;
-  cards.forEach(card => card.style.height='auto');
-  cards.forEach(card => {
-    const top = card.offsetTop;
-    if(rowTop === null) rowTop = top;
-    if(top !== rowTop){
-      rowCards.forEach(c=>c.style.height=maxHeight+'px');
-      rowCards=[]; rowTop=top; maxHeight=0;
-    }
-    rowCards.push(card);
-    if(card.offsetHeight>maxHeight) maxHeight=card.offsetHeight;
-  });
-  rowCards.forEach(c=>c.style.height=maxHeight+'px');
-}
-
-// 加入訂單
 function addPOSItem(product){
   const exist = posCart.find(p=>p.name===product['商品名稱']);
   if(exist) exist.quantity++;
@@ -312,7 +298,6 @@ function addPOSItem(product){
   renderPOSCart();
 }
 
-// 渲染訂單明細
 function renderPOSCart(){
   const container = document.getElementById("posCart");
   container.innerHTML="";
@@ -330,7 +315,7 @@ function renderPOSCart(){
       </span>
       <span class="price" onclick="openEditModal(${index},'price')">${item.price}</span>
       <span class="total">${subtotal}</span>
-      <span class="del"><button onclick="removePOSItem(${index})">刪除</button></span>
+      <span class="del"><button onclick="removePOSItem(${index})">🗑️</button></span>
     `;
     container.appendChild(div);
   });
@@ -347,68 +332,65 @@ function removePOSItem(index){
   renderPOSCart();
 }
 
-// 編輯數字彈窗
 function openEditModal(index, field){
-  editIndex=index;
-  editingField=field;
+  editIndex = index;
+  editingField = field;
   const item = posCart[index];
-  document.getElementById("modalProductName").textContent=item.name;
-  const input=document.getElementById("modalInput");
-  input.value=editingField==="qty"?item.quantity:item.price;
-  document.getElementById("modalLabel").textContent=editingField==="qty"?"數量":"單價";
-  document.getElementById("editModal").style.display="flex";
+  document.getElementById("modalProductName").textContent = item.name;
+  const input = document.getElementById("modalInput");
+  input.value = editingField==="qty"?item.quantity:item.price;
+  document.getElementById("modalLabel").textContent = editingField==="qty"?"數量":"單價";
+  document.getElementById("editModal").style.display = "flex";
 }
 
 function closeModal(){ 
-  document.getElementById("editModal").style.display="none"; 
+  document.getElementById("editModal").style.display = "none"; 
   editIndex=null; 
   renderPOSCart(); 
 }
 
 function numpadPress(num){
-  const input=document.getElementById("modalInput");
-  input.value=(input.value==="0"?num:input.value+num);
+  const input = document.getElementById("modalInput");
+  input.value = (input.value==="0"?num:input.value + num);
 }
 
 function numpadBack(){
-  const input=document.getElementById("modalInput");
-  input.value=input.value.slice(0,-1) || "0";
+  const input = document.getElementById("modalInput");
+  input.value = input.value.slice(0,-1) || "0";
 }
 
 function confirmEdit(){
-  const inputValue=parseInt(document.getElementById("modalInput").value);
+  const inputValue = parseInt(document.getElementById("modalInput").value);
   if(editingField==="qty"){
-    posCart[editIndex].quantity=isNaN(inputValue)||inputValue<1?1:inputValue;
+    posCart[editIndex].quantity = isNaN(inputValue) || inputValue<1 ? 1 : inputValue;
   } else {
-    posCart[editIndex].price=isNaN(inputValue)||inputValue<0?0:inputValue;
+    posCart[editIndex].price = isNaN(inputValue) || inputValue<0 ? 0 : inputValue;
   }
   closeModal();
 }
 
-// 結帳
 document.getElementById("posCheckout").onclick = async function(){
   if(posCart.length===0){ alert("沒有商品"); return; }
-  const totalAmount=posCart.reduce((sum,i)=>sum+i.price*i.quantity,0);
-  const paymentMethod=document.getElementById("posPayment").value;
-  const data={userId:"POS_User",totalAmount,paymentMethod,items:posCart};
+  const totalAmount = posCart.reduce((sum,i)=>sum+i.price*i.quantity,0);
+  const paymentMethod = document.getElementById("posPayment").value;
+  const data = {userId:"POS_User",totalAmount,paymentMethod,items:posCart};
+
   try{
-    const res=await fetch(API_URL,{
+    const res = await fetch(API_URL,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(data)
     });
-    const result=await res.json();
+    const result = await res.json();
     if(result.status==="success"){
-      alert("訂單完成，單號："+result.orderId);
+      alert("訂單完成，單號：" + result.orderId);
       posCart=[]; renderPOSCart();
-    } else alert("列印失敗："+result.message);
+    } else alert("列印失敗：" + result.message);
   }catch(e){ alert("結帳失敗:"+e); }
 }
 
-window.addEventListener('load', ()=>{ fetchProducts(); });
-window.addEventListener('resize', setProductCardHeight);
+fetchProducts();
 </script>
-
 </body>
 </html>
 
