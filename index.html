@@ -84,21 +84,23 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     background:#fff;
     transition:0.2s;
     font-size:0.7em;
+    min-height:40px; /* 高度統一 */
 }
 #posCart div span.name{
-    flex:4;
-    white-space:normal;
+    flex:3; 
+    white-space:normal; /* 自動換行 */
     word-break:break-word;
 }
-#posCart div span.qty{
-    flex:1;
+#posCart div span.qty,
+#posCart div span.price,
+#posCart div span.subtotal,
+#posCart div span.remove{
+    flex:1.25;
     text-align:center;
-    cursor:pointer;
 }
-#posCart div span.price, #posCart div span.subtotal{
-    flex:1;
-    text-align:right;
-}
+#posCart div span.qty{cursor:pointer;}
+#posCart div span.price,
+#posCart div span.subtotal{text-align:right;}
 #posCart div span.remove button{
     padding:2px 6px;
     font-size:0.7em;
@@ -139,11 +141,11 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   <div id="posCartContainer">
     <h3 style="font-size:85%; white-space:nowrap;">訂單明細</h3>
     <div class="cartHeader">
-      <span style="flex:4">商品名稱</span>
-      <span style="flex:1;text-align:center">數量</span>
-      <span style="flex:1;text-align:right">單價</span>
-      <span style="flex:1;text-align:right">小計</span>
-      <span style="flex:0.5;text-align:center">刪除</span>
+      <span style="flex:3">商品名稱</span>
+      <span style="flex:1.25;text-align:center">數量</span>
+      <span style="flex:1.25;text-align:right">單價</span>
+      <span style="flex:1.25;text-align:right">小計</span>
+      <span style="flex:1.25;text-align:center">刪除</span>
     </div>
     <div id="posCart"></div>
     <p>總額: <span id="posTotal">0</span> 元</p>
@@ -234,7 +236,7 @@ function renderProducts(category){
 function addPOSItem(product){
   const exist = posCart.find(p=>p.name===product['商品名稱']);
   if(exist) exist.quantity++;
-  else posCart.push({name:product['商品名稱'],price:parseInt(product['售價']),quantity:1});
+  else posCart.push({name:product['商品名稱'],price:parseInt(product['售價']),quantity:1,unit:product['單位']});
   renderPOSCart();
 }
 
@@ -248,7 +250,7 @@ function renderPOSCart(){
     const div = document.createElement("div");
     div.innerHTML=`
       <span class="name">${item.name}</span>
-      <span class="qty" onclick="openEditModal(${index},'qty')">${item.quantity}</span>
+      <span class="qty" onclick="openEditModal(${index},'qty')">${item.quantity}${item.unit}</span>
       <span class="price" onclick="openEditModal(${index},'price')">${item.price}</span>
       <span class="subtotal">${subtotal}</span>
       <span class="remove"><button onclick="removePOSItem(${index})">🗑</button></span>
@@ -323,6 +325,7 @@ fetchProducts();
 </script>
 </body>
 </html>
+
 
 
 
