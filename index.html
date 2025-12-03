@@ -18,14 +18,13 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 /* 中間商品 */
 #posProducts{
   flex:1;
-  padding:15px;
+  padding:15px 0 15px 5%;
   display:grid;
-  grid-template-columns:repeat(auto-fill,120px);
+  grid-template-columns:repeat(auto-fill, 120px);
   justify-content:start;
-  row-gap:10px;           /* 上下間距固定 */
-  column-gap:calc(10px + 3%); /* 左右間距增加3% */
+  row-gap:15px;
+  column-gap:calc(10px + 3%);
   overflow-y:auto;
-  padding-left:5%;        /* 左側加寬5% */
 }
 .product-card{
   background:white;
@@ -38,14 +37,14 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   transition:0.3s;
   cursor:pointer;
   width:120px;
-  height:200px; /* 固定高度 */
+  height:200px;
 }
 .product-card:hover{
   transform:translateY(-5px);
   box-shadow:0 6px 12px rgba(0,0,0,0.15);
 }
 .product-card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;margin-bottom:5px;}
-.product-card h4{margin:0;font-size:0.6em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} /* 名稱縮小30% */
+.product-card h4{margin:0;font-size:0.6em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .product-card p{margin:2px 0;font-size:0.8em;color:#555;}
 
 /* 右側訂單明細 */
@@ -60,7 +59,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     min-height:400px;
 }
 
-/* 標題列（不換行 + 字體縮小15%） */
+/* 標題列 */
 .cartHeader{
     font-weight:bold;
     background:#eee;
@@ -84,24 +83,17 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     border-radius:6px;
     background:#fff;
     transition:0.2s;
-    font-size:0.7em; /* 文字縮小30% */
+    font-size:0.7em;
 }
-#posCart div span:first-child{
-    flex:3;
+#posCart div span.name{
+    flex:4;
     white-space:normal;
     word-break:break-word;
 }
 #posCart div span.qty{
     flex:1;
     text-align:center;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-#posCart div span.qty button{
-    padding:2px 6px;
-    margin:0 2px;
-    white-space:nowrap; /* +- 不換行 */
+    cursor:pointer;
 }
 #posCart div span.price, #posCart div span.subtotal{
     flex:1;
@@ -109,8 +101,8 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 }
 #posCart div span.remove button{
     padding:2px 6px;
-    font-size:0.7em; /* 縮小20% */
-    border-radius:6px; /* 圓角 */
+    font-size:0.7em;
+    border-radius:6px;
     background:#e74c3c;
     color:white;
     border:none;
@@ -118,7 +110,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 /* 總額 */
 #posCartContainer p{
-    font-size:1.2em; /* 放大20% */
+    font-size:1.2em;
     font-weight:bold;
 }
 
@@ -147,11 +139,11 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   <div id="posCartContainer">
     <h3 style="font-size:85%; white-space:nowrap;">訂單明細</h3>
     <div class="cartHeader">
-      <span style="flex:3">商品名稱</span>
+      <span style="flex:4">商品名稱</span>
       <span style="flex:1;text-align:center">數量</span>
       <span style="flex:1;text-align:right">單價</span>
       <span style="flex:1;text-align:right">小計</span>
-      <span style="flex:0.8;text-align:center">刪除</span>
+      <span style="flex:0.5;text-align:center">刪除</span>
     </div>
     <div id="posCart"></div>
     <p>總額: <span id="posTotal">0</span> 元</p>
@@ -192,7 +184,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 </div>
 
 <script>
-// 這裡保留原 POS JS 邏輯，與之前程式碼一致
 const API_URL = "https://script.google.com/macros/s/AKfycbym4u_bE2-YO1kXyBeSIsYWZBpdG_030NL4BVJcwEnebKGF8BSdFe9rSkjZdAaOU_-H/exec"; 
 let products=[], categories=[], posCart=[];
 let editIndex = null;
@@ -256,12 +247,8 @@ function renderPOSCart(){
     total+=subtotal;
     const div = document.createElement("div");
     div.innerHTML=`
-      <span>${item.name}</span>
-      <span class="qty">
-        <button onclick="adjustQty(${index},-1)">-</button>
-        <span onclick="openEditModal(${index},'qty')">${item.quantity}</span>
-        <button onclick="adjustQty(${index},1)">+</button>
-      </span>
+      <span class="name">${item.name}</span>
+      <span class="qty" onclick="openEditModal(${index},'qty')">${item.quantity}</span>
       <span class="price" onclick="openEditModal(${index},'price')">${item.price}</span>
       <span class="subtotal">${subtotal}</span>
       <span class="remove"><button onclick="removePOSItem(${index})">🗑</button></span>
@@ -269,16 +256,6 @@ function renderPOSCart(){
     container.appendChild(div);
   });
   document.getElementById("posTotal").textContent=total;
-}
-
-function adjustQty(index,delta){
-  posCart[index].quantity=Math.max(1,posCart[index].quantity+delta);
-  renderPOSCart();
-}
-
-function removePOSItem(index){
-  posCart.splice(index,1);
-  renderPOSCart();
 }
 
 function openEditModal(index, field){
@@ -316,6 +293,11 @@ function confirmEdit(){
     posCart[editIndex].price = isNaN(inputValue) || inputValue<0 ? 0 : inputValue;
   }
   closeModal();
+}
+
+function removePOSItem(index){
+  posCart.splice(index,1);
+  renderPOSCart();
 }
 
 document.getElementById("posCheckout").onclick = async function(){
