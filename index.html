@@ -20,8 +20,9 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   flex:1;
   padding:15px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:10px;
+  grid-template-columns:repeat(auto-fill,120px); /* 固定寬度 */
+  justify-content:start; /* 固定間距，不撐滿 */
+  gap:10px; /* 固定間距 */
   overflow-y:auto;
 }
 .product-card{
@@ -34,7 +35,8 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   text-align:center;
   transition:0.3s;
   cursor:pointer;
-  height:220px;       /* 統一高度 */
+  width:120px;  /* 固定寬度 */
+  height:200px; /* 固定高度 */
 }
 .product-card:hover{
   transform:scale(1.05);
@@ -46,11 +48,10 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   border-radius:8px;
   margin-bottom:5px;
 }
-
-/* 商品卡名稱自動縮放文字，最多兩行 */
+/* 商品名稱縮小 30% */
 .product-card h4{
   margin:0;
-  font-size:clamp(0.65em,2vw,0.85em); /* 自動縮放 */
+  font-size:0.6em;
   display:-webkit-box;
   -webkit-line-clamp:2;
   -webkit-box-orient:vertical;
@@ -76,7 +77,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   min-height:400px;
 }
 
-/* 標題列（不換行 + 字體縮小15%） */
+/* 標題列 */
 .cartHeader{
   font-weight:bold;
   background:#eee;
@@ -90,13 +91,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   border-radius:6px;
 }
 
-/* 訂單明細文字縮小30% */
-#posCartContainer p,
-#posCartContainer span,
-#posCartContainer .cartHeader span{
-    font-size:70%;
-}
-
 /* 商品列 */
 #posCart div{
     display:flex;
@@ -108,8 +102,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     background:#fff;
     transition:0.2s;
 }
-
-/* 商品名稱最多 2 行，自動換行，超出省略 */
+/* 商品名稱 */
 #posCart div span.name{
     flex:3;
     display:-webkit-box;
@@ -118,7 +111,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     overflow:hidden;
     word-break:break-word;
     white-space:normal;
-    font-size:clamp(0.6em,2vw,0.85em); /* 自動縮放文字 */
+    font-size:0.7em; /* 縮小 30% */
 }
 
 /* 數量欄 */
@@ -130,7 +123,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     align-items:center;
     gap:2px;
 }
-/* +- 按鈕不換行 */
 #posCart div span.qty button{
     white-space:nowrap;
     padding:2px 6px;
@@ -142,28 +134,28 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     cursor:pointer;
 }
 
-/* 單價靠右 */
-#posCart div span.price{
+/* 單價與小計 */
+#posCart div span.price, #posCart div span.total{
     flex:1;
     text-align:right;
+    font-size:0.85em;
 }
 
-/* 小計靠右 */
-#posCart div span.total{
-    flex:1;
-    text-align:right;
-}
-
-/* 刪除按鈕 ICON */
+/* 刪除按鈕 */
 #posCart div span.del{
     flex:0.8;
     text-align:center;
 }
 #posCart div span.del button{
-    font-size:1em;
-    padding:4px 6px;
+    font-size:0.8em; /* 縮小 20% */
+    padding:3px 6px;
+    border-radius:8px; /* 圓角 */
     background:#e74c3c;
+    color:white;
 }
+
+/* 總額加大 20% */
+#posTotal{font-size:120%; font-weight:bold;}
 
 /* 結帳 */
 #posCheckout{width:100%;padding:12px;font-size:1.2em;margin-top:5px;background:#27ae60;color:white;border:none;border-radius:6px;}
@@ -180,15 +172,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 .modalActions button{flex:1;padding:12px;font-size:1em;border:none;border-radius:6px;}
 .modalActions .confirm{background:#27ae60;color:white;}
 .modalActions .cancel{background:#e74c3c;color:white;}
-
-/* 響應式手機版 */
-@media screen and (max-width:768px){
-  #posApp{flex-direction:column;}
-  #posCategories{width:100%;border-radius:0;}
-  #posProducts{width:100%;padding:10px;}
-  #posCartContainer{width:100%;border-left:none;border-top:2px solid #ddd;}
-  #posCartContainer p, #posCartContainer select, #posCartContainer button{font-size:80%;}
-}
 </style>
 </head>
 <body>
@@ -284,7 +267,7 @@ function renderProducts(category){
     card.innerHTML=`
       <img src="${p['商品照片']}" alt="${p['商品名稱']}">
       <h4 title="${p['商品名稱']}">${p['商品名稱']}</h4>
-      <p>${p['售價']} 元 / ${p['單位']}</p>
+      <p>${p['售價']} 元</p>
     `;
     card.onclick = () => addPOSItem(p);
     container.appendChild(card);
@@ -294,7 +277,7 @@ function renderProducts(category){
 function addPOSItem(product){
   const exist = posCart.find(p=>p.name===product['商品名稱']);
   if(exist) exist.quantity++;
-  else posCart.push({name:product['商品名稱'],price:parseInt(product['售價']),quantity:1,unit:product['單位']});
+  else posCart.push({name:product['商品名稱'],price:parseInt(product['售價']),quantity:1});
   renderPOSCart();
 }
 
@@ -310,7 +293,7 @@ function renderPOSCart(){
       <span class="name">${item.name}</span>
       <span class="qty">
         <button onclick="adjustQty(${index},-1)">-</button>
-        <span onclick="openEditModal(${index},'qty')">${item.quantity}${item.unit}</span>
+        <span onclick="openEditModal(${index},'qty')">${item.quantity}</span>
         <button onclick="adjustQty(${index},1)">+</button>
       </span>
       <span class="price" onclick="openEditModal(${index},'price')">${item.price}</span>
@@ -393,6 +376,7 @@ fetchProducts();
 </script>
 </body>
 </html>
+
 
 
 
