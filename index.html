@@ -233,12 +233,32 @@ function renderProducts(category=null,search=""){
 
 // ----------- 加入商品 -----------
 function addPOSItem(p){
-  let qtyAdd=1;
-  let exist = posCart.find(x=>x.name===p["商品名稱"]);
-  if(exist){ exist.quantity += qtyAdd; }
-  else { posCart.push({ name:p["商品名稱"], quantity:qtyAdd, price:Number(p["售價"]), unit:p["單位"], discount:null }); }
+  let qtyAdd = 1;                 // 預設加入 1
+  let pricePerUnit = Number(p["售價"]);
+  let unit = p["單位"];            // 原單位預設
+
+  // 如果是半斤商品，調整數量與價格
+  if(p["單位"] === "半斤"){
+    qtyAdd = 0.5;
+    pricePerUnit = pricePerUnit * 2; // 換算每斤價格
+    unit = "斤";                       // 顯示單位統一為斤
+  }
+
+  let exist = posCart.find(x => x.name === p["商品名稱"]);
+  if(exist){
+    exist.quantity += qtyAdd;
+  } else {
+    posCart.push({
+      name: p["商品名稱"],
+      quantity: qtyAdd,
+      price: pricePerUnit,
+      unit: unit,       // 其他單位保持原樣
+      discount: null
+    });
+  }
   renderCart();
 }
+
 
 // ----------- 渲染購物車 -----------
 function renderCart(){
