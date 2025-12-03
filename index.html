@@ -21,11 +21,14 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   padding:15px 0 15px 5%;
   display:grid;
   grid-template-columns:repeat(auto-fill, 120px);
-  justify-content:start;
-  row-gap:15px;  /* 上下間距固定 */
-  column-gap:15px; /* 左右間距固定 */
+  row-gap:15px;      /* 上下間距固定 */
+  column-gap:15px;   /* 左右間距固定 */
+  justify-content:start;  /* 左對齊 */
+  align-content:start;    /* 避免上下間距自動拉高 */
+  grid-auto-rows:200px;   /* 每行高度固定 */
   overflow-y:auto;
 }
+
 .product-card{
   background:white;
   border-radius:12px;
@@ -37,15 +40,31 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   transition:0.3s;
   cursor:pointer;
   width:120px;
-  height:200px;  /* 固定高度，不因內容增長而拉高 */
+  height:200px;  /* 固定高度 */
+  overflow:hidden; /* 避免文字拉高卡片 */
 }
+
 .product-card:hover{
   transform:translateY(-5px);
   box-shadow:0 6px 12px rgba(0,0,0,0.15);
 }
-.product-card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;margin-bottom:5px;}
-.product-card h4{margin:0;font-size:0.6em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.product-card p{margin:2px 0;font-size:0.8em;color:#555;}
+
+.product-card img{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  border-radius:8px;
+  margin-bottom:5px;
+}
+
+.product-card h4,
+.product-card p {
+  margin:2px 0;
+  font-size:0.8em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
 /* 右側訂單明細 */
 #posCartContainer{
@@ -129,7 +148,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
       <span style="flex:1.25;text-align:center">刪除</span>
     </div>
     <div id="posCart"></div>
-    <p>總額: <span id="posTotal">0</span> 元</p>
+    <p>總額: <span id="posTotal">0</span></p>
     <select id="posPayment">
       <option value="現金">現金</option>
       <option value="信用卡">信用卡</option>
@@ -167,7 +186,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 </div>
 
 <script>
-// 商品資料與訂單功能同前面程式碼
+// 商品資料與訂單功能
 const API_URL = "https://script.google.com/macros/s/AKfycbym4u_bE2-YO1kXyBeSIsYWZBpdG_030NL4BVJcwEnebKGF8BSdFe9rSkjZdAaOU_-H/exec"; 
 let products=[], categories=[], posCart=[];
 let editIndex = null;
@@ -226,9 +245,11 @@ function renderPOSCart(){
   const container = document.getElementById("posCart");
   container.innerHTML="";
   let total=0;
+  let totalQty=0;
   posCart.forEach((item,index)=>{
     const subtotal = item.price*item.quantity;
     total+=subtotal;
+    totalQty+=item.quantity;
     const div = document.createElement("div");
     div.innerHTML=`
       <span class="name">${item.name}</span>
@@ -239,7 +260,10 @@ function renderPOSCart(){
     `;
     container.appendChild(div);
   });
-  document.getElementById("posTotal").textContent=total;
+
+  // 顯示共 N 項 | 總數量 | 總金額
+  const totalItems = posCart.length;
+  document.getElementById("posTotal").textContent = `共 ${totalItems} 項 | 總數量 ${totalQty} | ${total} 元`;
 }
 
 function openEditModal(index, field){
@@ -307,7 +331,6 @@ fetchProducts();
 </script>
 </body>
 </html>
-
 
 
 
