@@ -54,31 +54,108 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   <div id="posCategories"><h3>分類</h3></div>
   <div id="posProducts"></div>
   <div id="posCartContainer">
-        <!-- 右側購物車 -->
+  /* 右側訂單明細 */
+#posCartContainer{
+    width:25%;
+    min-width:220px;
+    background:#f7f7f7;
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+    border-left:2px solid #ddd;
+    min-height:400px;
+}
+.cartHeader{
+    font-weight:bold;
+    background:#eee;
+    white-space:nowrap;
+    font-size:85%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:5px;
+    padding:5px;
+    border-radius:6px;
+}
+#posCart div{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:5px;
+    padding:5px;
+    border-radius:6px;
+    background:#fff;
+    transition:0.2s;
+    font-size:0.7em;
+    min-height:40px;
+}
+#posCart div span.name{flex:3; white-space:normal; word-break:break-word;}
+#posCart div span.qty,
+#posCart div span.price,
+#posCart div span.subtotal,
+#posCart div span.remove{flex:1.25; text-align:center;}
+#posCart div span.price,
+#posCart div span.subtotal{text-align:right;}
+#posCart div span.remove button{padding:2px 6px;font-size:0.7em;border-radius:6px;background:#e74c3c;color:white;border:none;}
+#posCartContainer p{font-size:1.08em;font-weight:bold;white-space:nowrap;}
+#posCheckout{width:100%;padding:12px;font-size:1.2em;margin-top:5px;background:#27ae60;color:white;border:none;border-radius:6px;}
+#posCartContainer input[type="number"]{padding:4px 6px;font-size:0.9em;border-radius:6px;border:1px solid #ccc;}
+.tax-btn{flex:1;padding:6px 8px;border-radius:6px;border:none;cursor:pointer;font-size:0.85em;}
+.tax-btn.active{background:#27ae60;color:white;}
+.tax-btn.inactive{background:#bdc3c7;color:white;}
+
+/* 數字鍵盤彈窗 */
+#editModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;}
+#editModal .modalContent{background:#fff;padding:20px;border-radius:12px;width:320px;text-align:center;display:flex;flex-direction:column;align-items:center;}
+#editModal h4{margin-bottom:10px;}
+#editModal input{width:80px;text-align:center;font-size:1.3em;margin:5px;border:2px solid #ccc;border-radius:6px;}
+#numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px;}
+#numpad button{padding:15px;font-size:1.2em;background:#3498db;color:white;border:none;border-radius:6px;transition:0.2s;}
+#numpad button:hover{background:#2980b9;}
+.modalActions{display:flex;gap:5px;width:100%;justify-content:center;}
+.modalActions button{flex:1;padding:10px;font-size:1em;border:none;border-radius:6px;}
+.modalActions .confirm{background:#27ae60;color:white;}
+.modalActions .cancel{background:#e74c3c;color:white;}
+.modalActions .convert{background:#f39c12;color:white;}
+
+/* 響應式 */
+@media(max-width:900px){
+  #posApp{flex-direction:column;}
+  #posCategories{width:100%;border-radius:0 0 12px 12px;}
+  #posCartContainer{width:100%;border-left:none;border-top:2px solid #ddd;margin-top:10px;}
+}
+</style>
+</head>
+<body>
+
+<div id="posApp">
+  <div id="posCategories"><h3>分類</h3></div>
+  <div id="posProducts"></div>
   <div id="posCartContainer">
-    <h3 style="font-size:85%;">訂單明細</h3>
+    <h3 style="font-size:85%; white-space:nowrap;">訂單明細</h3>
     <div class="cartHeader">
-      <span style="flex:2.5">商品</span>
-      <span style="flex:1">數量</span>
-      <span style="flex:1">單價</span>
-      <span style="flex:1">小計</span>
-      <span style="flex:1">刪除</span>
+      <span style="flex:3">商品名稱</span>
+      <span style="flex:1.25;text-align:center">數量</span>
+      <span style="flex:1.25;text-align:right">單價</span>
+      <span style="flex:1.25;text-align:right">小計</span>
+      <span style="flex:1.25;text-align:center">刪除</span>
+    </div>
+    <div id="posCart"></div>
+
+    <!-- 折扣 + 稅金按鈕 -->
+    <div style="display:flex; gap:5px; margin:5px 0; align-items:center;">
+      <input type="number" id="discount" placeholder="折扣金額" min="0" step="0.01" onclick="openDiscountModal()">
+      <button class="tax-btn active" id="taxFreeBtn" onclick="setTax(false)">免稅</button>
+      <button class="tax-btn inactive" id="taxBtn" onclick="setTax(true)">應稅</button>
     </div>
 
-      <input type="text" id="discount" placeholder="折扣" readonly onclick="openDiscountModal()">
-      <button class="tax-btn" onclick="setTax('免稅')">免稅</button>
-      <button class="tax-btn" onclick="setTax('應稅')">應稅</button>
-    </div>
-    <p>總額: <span id="posTotal">0</span> 元</p>
-    <div id="paymentContainer">
-      <button class="payment-btn active" onclick="setPayment('現金')">現金</button>
-      <button class="payment-btn" onclick="setPayment('LINEPAY')">LINEPAY</button>
-      <button class="payment-btn" onclick="setPayment('信用卡')">信用卡</button>
-    </div>
-    <div id="cashContainer">
-      <input type="text" id="cashReceived" readonly onclick="openCashModal()">
-      找零: <span id="cashChange">0</span>
-    </div>
+    <p>總額: <span id="posTotal">0</span></p>
+    <select id="posPayment">
+      <option value="現金">現金</option>
+      <option value="信用卡">信用卡</option>
+      <option value="Line Pay">Line Pay</option>
+    </select>
     <button id="posCheckout">結帳列印</button>
   </div>
 </div>
@@ -106,18 +183,12 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     </div>
     <div class="modalActions">
       <button class="cancel" onclick="closeModal()">取消</button>
-      <button class="convert" onclick="convertScaleToJin()">換算斤</button>
+      <button class="convert" onclick="convertUnit()">換算(斤)</button>
       <button class="confirm" onclick="confirmEdit()">確定</button>
     </div>
   </div>
 </div>
 
-<div id="checkoutModal">
-  <div class="modalContent">
-    <div id="checkoutContent"></div>
-    <button onclick="closeCheckoutModal()">確認</button>
-  </div>
-</div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbym4u_bE2-YO1kXyBeSIsYWZBpdG_030NL4BVJcwEnebKGF8BSdFe9rSkjZdAaOU_-H/exec";
