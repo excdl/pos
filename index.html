@@ -54,9 +54,17 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   <div id="posCategories"><h3>分類</h3></div>
   <div id="posProducts"></div>
   <div id="posCartContainer">
-    <h3 style="font-size:85%; white-space:nowrap;">訂單明細</h3>
-    <div id="posCart"></div>
-    <div id="discountContainer">
+        <!-- 右側購物車 -->
+  <div id="posCartContainer">
+    <h3 style="font-size:85%;">訂單明細</h3>
+    <div class="cartHeader">
+      <span style="flex:2.5">商品</span>
+      <span style="flex:1">數量</span>
+      <span style="flex:1">單價</span>
+      <span style="flex:1">小計</span>
+      <span style="flex:1">刪除</span>
+    </div>
+
       <input type="text" id="discount" placeholder="折扣" readonly onclick="openDiscountModal()">
       <button class="tax-btn" onclick="setTax('免稅')">免稅</button>
       <button class="tax-btn" onclick="setTax('應稅')">應稅</button>
