@@ -43,13 +43,15 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 }
 
 #discount{
-    flex:1;
+    width:50%;           /* 改為50%寬 */
     padding:8px;
+    margin:5px 0;
     border:2px solid #ccc;
     border-radius:6px;
     text-align:right;
     font-size:1em;
 }
+
 
 #taxButtons{
     display:flex;
@@ -135,17 +137,16 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     <div id="posCart"></div>
 
     <!-- 折扣 + 稅金模式 -->
-    <div id="discountTaxRow">
-        <input type="text" id="discount" placeholder="折扣" readonly onclick="openDiscountModal()">
+    <!-- 折扣 + 稅別按鈕列 -->
+<div id="discountTaxRow" style="display:flex; gap:5px; align-items:center; margin:5px 0;">
+    <input type="text" id="discount" placeholder="折扣金額" readonly onclick="openDiscountModal()">
+    <button id="taxAdd" class="active" onclick="setTaxMode('外加稅')">應稅</button>
+    <button id="taxInclude" onclick="setTaxMode('內含稅')">內含稅</button>
+    <button id="taxFree" onclick="setTaxMode('免稅')">免稅</button>
+     <p id="taxAmount" style="display:none;">稅金：<span id="taxValue">0</span> 元</p>
+</div>
 
-        <div id="taxButtons">
-            <button id="taxAdd" class="active" onclick="setTaxMode('外加稅')">外加稅</button>
-            <button id="taxInclude" onclick="setTaxMode('內含稅')">內含稅</button>
-            <button id="taxFree" onclick="setTaxMode('免稅')">免稅</button>
-        </div>
-    </div>
-
-    <p id="taxAmount" style="display:none;">稅金：<span id="taxValue">0</span> 元</p>
+   
 
     <p>總額：<span id="posTotal">0</span> 元</p>
 
