@@ -140,35 +140,38 @@ let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
 let currentStore="";
 
-async function login(){
+const API_URL = "https://你的AppsScript網址/exec";
+let POS_STORE = "";
+
+function login(){
   const store = document.getElementById("storeInput").value.trim();
   const pwd = document.getElementById("passwordInput").value.trim();
 
-  // 選擇性抓使用者 IP (可用第三方 API 取得)
-  let ip = "";
-  try{
-    const res = await fetch("https://api.ipify.org?format=json");
-    const data = await res.json();
-    ip = data.ip;
-  }catch(err){ ip=""; }
-
-  const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${ip}`);
-  const result = await res.json();
-
-  if(result.status==="success"){
-    // 登入成功，隱藏登入頁、顯示 POS 系統
-    document.getElementById("loginPage").style.display="none";
-    document.getElementById("posApp").style.display="flex";
-
-    // 顯示門市名稱
-    document.getElementById("storeDisplay").innerText = result.storeName;
-    
-    // 初始化 POS 資料
-    fetchProducts(store);
-  } else {
-    document.getElementById("loginMsg").innerText = result.message;
+  if(!store || !pwd){
+    document.getElementById("loginMsg").innerText = "請輸入門市編號及密碼";
+    return;
   }
+
+  fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}`)
+    .then(res => res.json())
+    .then(res => {
+      if(res.status === "success"){
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("posApp").style.display = "flex";
+        POS_STORE = res.storeCode; // 後續 GET 商品使用
+        alert("歡迎：" + res.storeName);
+        // 可呼叫函式載入商品與分類
+        fetchProducts(POS_STORE);
+      } else {
+        document.getElementById("loginMsg").innerText = res.message;
+      }
+    })
+    .catch(err => {
+      document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
+      console.error(err);
+    });
 }
+
 
 
 // ===== 取得商品 =====
