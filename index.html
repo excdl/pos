@@ -116,7 +116,7 @@ async function login(){
     ip = ipData.ip;
   } catch(e){ console.log("抓 IP 失敗"); }
 
-  const WEBAPP_URL = "https://script.google.com/macros/s/你的WebAppID/exec";
+  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyXeYTbifK9UPpG84u4KT3_lTpqWEaRzElykcwuZIKNYIOu4nOi_bmWELF8QL0x9FAX/exec";
   const url = `${WEBAPP_URL}?action=login&userId=${encodeURIComponent(userId)}&password=${encodeURIComponent(password)}&ip=${encodeURIComponent(ip)}`;
   try{
     const resp = await fetch(url);
