@@ -48,7 +48,13 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   #numpad button{padding:20px;font-size:1.5em;}
   #editModal input{font-size:1.8em;}
 }
-  
+/* 優惠模式：隱藏輸入框並移除空間 */
+#editModal.promoMode #modalInput {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+}  
 </style>
 </head>
 <body>
@@ -262,6 +268,8 @@ function openPromoModal(item){
   });
   document.getElementById("modalProductName").innerText=item.name;
   document.getElementById("editModal").style.display='flex';
+  document.getElementById("editModal").classList.add("promoMode");
+
 }
 
 // ===== 數字鍵盤 =====
@@ -294,7 +302,8 @@ function confirmEdit(){
   closeModal(); renderCart();
 }
 
-function closeModal(){document.getElementById("editModal").style.display='none'; editIndex=null; editingField=null; modalType=null;}
+function closeModal(){document.getElementById("editModal").style.display='none'; editIndex=null; editingField=null; modalType=null;document.getElementById("editModal").classList.remove("promoMode");
+}
 function setTax(t){ currentTax=t; document.getElementById("taxIncluded").classList.toggle('active',t==="應稅"); document.getElementById("taxExempt").classList.toggle('active',t==="免稅"); renderCart(); }
 function updateChange(){ 
   let cash=Number(document.getElementById("cashInput").value)||0;
