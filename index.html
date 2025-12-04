@@ -139,27 +139,25 @@ let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
 let currentStore="";
 
-// ===== 登入 =====
 async function login(){
-  const store = document.getElementById("storeInput").value.trim();
-  const pwd = document.getElementById("passwordInput").value.trim();
-  const msg = document.getElementById("loginMsg");
-  if(!store || !pwd){ msg.innerText="請輸入帳號密碼"; return; }
-  try{
-    const res = await fetch(API_URL+"?action=stores");
-    const stores = await res.json();
-    const match = stores.find(s=>s.store===store && s.pwd===pwd);
-    if(match){
-      currentStore = store;
-      document.getElementById("loginPage").style.display="none";
-      document.getElementById("posApp").style.display="flex";
-      fetchProducts();
-    }else{
-      msg.innerText="帳號或密碼錯誤";
-    }
-  }catch(err){
-    console.error(err);
-    msg.innerText="登入失敗，請稍後再試";
+  const pwd = document.getElementById("passwordInput").value;
+
+  // 取得使用者外部 IP
+  const ipRes = await fetch('https://api.ipify.org?format=json');
+  const ipData = await ipRes.json();
+  const userIP = ipData.ip;
+
+  // 呼叫後端登入
+  const res = await fetch(`${API_URL}?action=login&ip=${userIP}&pwd=${pwd}`);
+  const data = await res.json();
+
+  if(data.status==="success"){
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("posApp").style.display = "flex";
+    currentStore = data.storeCode;
+    fetchProducts(); // 取商品
+  } else {
+    document.getElementById("loginMsg").innerText = data.message;
   }
 }
 
