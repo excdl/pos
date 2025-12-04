@@ -175,9 +175,9 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 </div>
 
 <script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzz3Bsm8ntNDmFkHbNFlDzQJoIWChz2j8O5LVhv4sAx1iaXM1jBhJhZT5xEN4I9DF-6/exec";
 let products = [], categories = [], posCart = [];
-let currentTax = "應稅", editIndex = null, editingField = null, modalType = null;
-
+let currentTax = "應稅", editIndex = null, editingField = null, modalType=null;
 // 載入商品（無假商品）
 // products = [...] 可自行載入 API 或本地資料
 categories = [...new Set(products.map(x=>x["類別"]))];
