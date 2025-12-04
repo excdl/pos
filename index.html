@@ -176,27 +176,27 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzz3Bsm8ntNDmFkHbNFlDzQJoIWChz2j8O5LVhv4sAx1iaXM1jBhJhZT5xEN4I9DF-6/exec";
-let products = [], categories = [], posCart = [];
-let currentTax = "應稅", editIndex = null, editingField = null, modalType=null;
+let products=[],categories=[],posCart=[];
+let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
 
-// ----------- 載入商品 -----------
+// ===== 取得商品 =====
 async function fetchProducts(){
-  const res = await fetch(API_URL + "?action=products");
-  products = await res.json();
-  categories = [...new Set(products.map(x=>x["類別"]))];
+  const res = await fetch(API_URL+"?action=products");
+  products=await res.json();
+  categories=[...new Set(products.map(x=>x["類別"]))];
   renderCategories();
   if(categories.length>0) renderProducts(categories[0]);
 }
 fetchProducts();
 
-// ----------- 渲染分類 -----------
+// ===== 渲染分類 =====
 function renderCategories(){
-  const box = document.getElementById("posCategories");
+  const box=document.getElementById("posCategories");
   box.querySelectorAll("button").forEach(b=>b.remove());
   categories.forEach(cat=>{
-    const btn = document.createElement("button");
-    btn.textContent = cat;
-    btn.onclick = ()=>{
+    const btn=document.createElement("button");
+    btn.textContent=cat;
+    btn.onclick=()=>{
       document.querySelectorAll("#posCategories button").forEach(b=>b.classList.remove("active"));
       btn.classList.add("active");
       renderProducts(cat);
@@ -206,55 +206,46 @@ function renderCategories(){
   if(box.querySelector("button")) box.querySelector("button").classList.add("active");
 }
 
-// ----------- 搜尋 -----------
-document.getElementById("searchBox").oninput = function(){
+// ===== 搜尋商品 =====
+document.getElementById("searchBox").oninput=function(){
   renderProducts(null,this.value.trim().toLowerCase());
 };
 
-
-
-// ----------- 商品列表 -----------
+// ===== 渲染商品 =====
 function renderProducts(category=null,search=""){
-  const box = document.getElementById("posProducts");
-  box.innerHTML = "";
+  const box=document.getElementById("posProducts");
+  box.innerHTML="";
   products.filter(p=>{
     if(category && p["類別"]!==category) return false;
     if(search && !p["商品名稱"].toLowerCase().includes(search)) return false;
     return true;
   }).forEach(p=>{
-    const card = document.createElement("div");
-    card.className = "product-card";
-    card.innerHTML = `<img src="${p["商品照片"]}"><h4>${p["商品名稱"]}</h4><p>${p["售價"]} 元 / ${p["單位"]}</p>`;
-    card.onclick = ()=>addPOSItem(p);
+    const card=document.createElement("div");
+    card.className="product-card";
+    card.innerHTML=`<img src="${p["商品照片"]}"><h4>${p["商品名稱"]}</h4><p>${p["售價"]} 元 / ${p["單位"]}</p>`;
+    card.onclick=()=>addPOSItem(p);
     box.appendChild(card);
   });
 }
 
+// ===== 加入購物車 =====
 function addPOSItem(p){
-  let qtyAdd = 1;
-  let pricePerUnit = Number(p["售價"]);
-  let unit = p["單位"];
-
-  if(p["單位"] === "半斤"){
-    qtyAdd = 0.5;
-    pricePerUnit = pricePerUnit*2;
-    unit="斤";
-  }
-
-  let exist = posCart.find(x => x.name === p["商品名稱"]);
-  if(exist){
-    exist.quantity += qtyAdd;
-  } else {
-    posCart.push({name:p["商品名稱"], quantity:qtyAdd, price:pricePerUnit, unit:unit, discount:null});
-  }
+  let qtyAdd=1;
+  let pricePerUnit=Number(p["售價"]);
+  let unit=p["單位"];
+  if(p["單位"]==="半斤"){qtyAdd=0.5; pricePerUnit*=2; unit="斤";}
+  let exist=posCart.find(x=>x.name===p["商品名稱"]);
+  if(exist){exist.quantity+=qtyAdd;}
+  else{posCart.push({name:p["商品名稱"],quantity:qtyAdd,price:pricePerUnit,unit:unit,discount:null});}
   renderCart();
 }
 
+// ===== 渲染購物車 =====
 function renderCart(){
-  const box = document.getElementById("posCart"); box.innerHTML="";
+  const box=document.getElementById("posCart"); box.innerHTML="";
   let total=0;
   posCart.forEach((item,i)=>{
-    let sub = item.quantity*item.price;
+    let sub=item.quantity*item.price;
     if(item.discount){
       switch(item.discount.type){
         case "第二件減10": sub-=Math.floor(item.quantity/2)*10; break;
@@ -265,86 +256,109 @@ function renderCart(){
       }
     }
     total+=sub;
-    const row = document.createElement("div");
-    row.innerHTML = `<span class="name">${item.name}</span>
-      <span class="qty" onclick="openEditModal(${i},'quantity')">${item.quantity.toFixed(2)} ${item.unit}</span>
-      <span class="price" onclick="openEditModal(${i},'price')">${item.price}</span>
-      <span class="subtotal">${sub.toFixed(0)}</span>
-      <span class="remove"><button onclick="removeItem(${i})">刪</button></span>`;
+    const row=document.createElement("div");
+    row.className="cartRow";
+    row.innerHTML=`<span class="name" onclick="openPromoModal(posCart[${i}])">${item.name}</span>
+    <span class="qty" onclick="openEditModal(${i},'quantity')">${item.quantity.toFixed(2)} ${item.unit}</span>
+    <span class="price" onclick="openEditModal(${i},'price')">${item.price}</span>
+    <span class="subtotal">${sub.toFixed(0)}</span>
+    <span class="remove"><button onclick="removeItem(${i})">刪</button></span>`;
     box.appendChild(row);
   });
-
-  let discountValue = Number(document.getElementById("discount").value)||0;
-  let taxBase = total - discountValue;
-  let tax = currentTax==="應稅"? taxBase*0.05:0;
-  document.getElementById("taxAmount").innerText = tax.toFixed(0);
-  document.getElementById("posTotal").innerText = (taxBase+tax).toFixed(0);
-
+  let discountValue=Number(document.getElementById("discount").value)||0;
+  let taxBase=total-discountValue;
+  let tax=currentTax==="應稅"?taxBase*0.05:0;
+  document.getElementById("taxAmount").innerText=tax.toFixed(0);
+  document.getElementById("posTotal").innerText=(taxBase+tax).toFixed(0);
   updateChange();
 }
 
+// ===== 刪除商品 =====
 function removeItem(i){ posCart.splice(i,1); renderCart(); }
 
-document.getElementById("discount").onclick = ()=>openEditModal(null,'discount');
-document.getElementById("cashInput").onclick = ()=>openEditModal(null,'cash');
+// ===== 編輯數量/折扣/收現 =====
+document.getElementById("discount").onclick=()=>openEditModal(null,'discount');
+document.getElementById("cashInput").onclick=()=>openEditModal(null,'cash');
 
 function openEditModal(index,field){
-  editIndex=index; editingField=field;
-  modalType=field;
-  document.getElementById("modalInput").value = field==='discount'? document.getElementById("discount").value
-    : field==='cash'? document.getElementById("cashInput").value
-    : posCart[index][field];
-  document.getElementById("modalProductName").innerText = field==='cash'?'收現金': field==='discount'?'折扣':'輸入';
+  editIndex=index; editingField=field; modalType=field;
+  document.getElementById("promoButtons").style.display='none';
+  document.getElementById("numpad").style.display='grid';
+  let value=(field==='discount'?document.getElementById("discount").value
+    :field==='cash'?document.getElementById("cashInput").value
+    :posCart[index][field]);
+  document.getElementById("modalInput").value=value;
+  document.getElementById("modalProductName").innerText=field==='cash'?'收現金': field==='discount'?'折扣':'輸入';
   document.getElementById("editModal").style.display="flex";
 }
 
+// ===== 優惠按鈕 =====
+function openPromoModal(item){
+  modalType='promo'; editIndex=null;
+  document.getElementById("numpad").style.display='none';
+  const promoDiv=document.getElementById("promoButtons");
+  promoDiv.style.display='grid';
+  promoDiv.innerHTML='';
+  const promoList=[
+    {name:'95折',rate:0.95},{name:'9折',rate:0.9},{name:'85折',rate:0.85},{name:'8折',rate:0.8},
+    {name:'7折',rate:0.7},{name:'6折',rate:0.6},{name:'買一送一',type:'買一送一'},{name:'買二送一',type:'買二送一'},
+    {name:'第二件減10',type:'第二件減10'},{name:'第二件6折',type:'第二件6折'}
+  ];
+  promoList.forEach(p=>{
+    const btn=document.createElement('button');
+    btn.innerText=p.name;
+    btn.onclick=()=>{
+      let idx=posCart.findIndex(x=>x.name===item.name);
+      if(idx===-1) addPOSItem(item);
+      idx=posCart.findIndex(x=>x.name===item.name);
+      if(p.type) posCart[idx].discount={type:p.type};
+      else posCart[idx].discount={rate:p.rate,type:'折扣'};
+      closeModal(); renderCart();
+    };
+    promoDiv.appendChild(btn);
+  });
+  document.getElementById("modalProductName").innerText=item.name;
+  document.getElementById("editModal").style.display='flex';
+}
+
+// ===== 數字鍵盤 =====
 function np(v){
   let input=document.getElementById("modalInput");
-  if(v==="." && input.value.includes(".")) return;
-  if(input.value==="0" && v!=="." ) input.value = v;
-  else input.value=input.value+v;
+  input.value=(input.value==='0'&&v!=='.')?v:input.value+v;
 }
 function backspace(){
   let input=document.getElementById("modalInput");
   input.value=input.value.slice(0,-1);
-  if(input.value==="") input.value="0";
+  if(input.value==='') input.value='0';
 }
 
+// ===== 確定 =====
 function confirmEdit(){
-  let inputVal = document.getElementById("modalInput").value;
-  let v=Number(inputVal);
-
-  if(editingField==='quantity' && editIndex!==null){
-    let item = posCart[editIndex];
-    if(item.unit==="斤"){
-      // 斤、兩、錢格式換算成斤
-      let parts = inputVal.split(".");
-      let j = Number(parts[0])||0;
-      let l = Number(parts[1])||0;
-      let q = Number(parts[2])||0;
-      let totalJin = j + l/16 + q/160;
-      item.quantity = totalJin;
-    } else {
-      item.quantity = v;
-    }
-  } else if(modalType==='discount') document.getElementById("discount").value=v;
-  else if(modalType==='cash') document.getElementById("cashInput").value=v;
-
+  let val=document.getElementById("modalInput").value;
+  if(editIndex!==null && editingField==='quantity' && posCart[editIndex].unit==='斤'){
+    const parts=val.split('.');
+    let j=Number(parts[0])||0;
+    let l=Number(parts[1])||0;
+    let q=Number(parts[2])||0;
+    let totalQty=j + l/16 + q/160;
+    posCart[editIndex].quantity=totalQty;
+  } else {
+    let v=Number(val);
+    if(modalType==='discount') document.getElementById("discount").value=v;
+    else if(modalType==='cash') document.getElementById("cashInput").value=v;
+    else if(editIndex!==null) posCart[editIndex][editingField]=v;
+  }
   closeModal(); renderCart();
 }
 
-function closeModal(){
-  document.getElementById("editModal").style.display='none';
-  editIndex=null; editingField=null; modalType=null;
+function closeModal(){document.getElementById("editModal").style.display='none'; editIndex=null; editingField=null; modalType=null;}
+function setTax(t){ currentTax=t; document.getElementById("taxIncluded").classList.toggle('active',t==="應稅"); document.getElementById("taxExempt").classList.toggle('active',t==="免稅"); renderCart(); }
+function updateChange(){ 
+  let cash=Number(document.getElementById("cashInput").value)||0;
+  let total=Number(document.getElementById("posTotal").innerText)||0;
+  document.getElementById("changeOut").innerText=Math.max(0,cash-total).toFixed(0);
 }
 
-function setTax(t){ currentTax=t; renderCart(); }
-
-function updateChange(){
-  const total = Number(document.getElementById("posTotal").innerText)||0;
-  const cash = Number(document.getElementById("cashInput").value)||0;
-  document.getElementById("changeOut").innerText = (cash-total).toFixed(0);
-}
 
 document.getElementById("posCheckout").onclick=function(){
   const total=parseFloat(document.getElementById("posTotal").textContent)||0;
