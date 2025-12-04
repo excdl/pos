@@ -91,46 +91,27 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 
 <script>
-// ===== 變數初始化 =====
-const API_URL = "https://script.google.com/macros/s/AKfycbyXeYTbifK9UPpG84u4KT3_lTpqWEaRzElykcwuZIKNYIOu4nOi_bmWELF8QL0x9FAX/exec";
-let products = [], categories = [], posCart = [];
-let currentTax = "應稅", editIndex = null, editingField = null, modalType = null;
-let userId = "", userName = "", storeName = "";
+const API_URL="https://script.google.com/macros/s/AKfycbzXL-OT0wW255JhsuwkWdXz4AEYZVR9DVlGW_27FfOsJOPH-pCAUO4EPbdnHd5W1Y0b/exec";
 
+let products=[], categories=[], posCart=[];
+let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
+let userId="", userName="", storeName="";
+
+// ===== 登入 =====
 async function login(){
-  const userId = document.getElementById("userId").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const msgEl = document.getElementById("msg");
-  msgEl.textContent = "";
-
-  if(!userId || !password){
-    msgEl.textContent = "請輸入帳號密碼";
-    return;
-  }
-
-  // 抓外部 IP
-  let ip = "";
+  const uid=document.getElementById("userId").value.trim();
+  const pwd=document.getElementById("password").value.trim();
+  const msgEl=document.getElementById("msg"); msgEl.textContent="";
+  if(!uid||!pwd){msgEl.textContent="請輸入帳號密碼"; return;}
   try{
-    const ipResp = await fetch("https://api.ipify.org?format=json");
-    const ipData = await ipResp.json();
-    ip = ipData.ip;
-  } catch(e){ console.log("抓 IP 失敗"); }
-
-  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyXeYTbifK9UPpG84u4KT3_lTpqWEaRzElykcwuZIKNYIOu4nOi_bmWELF8QL0x9FAX/exec";
-  const url = `${WEBAPP_URL}?action=login&userId=${encodeURIComponent(userId)}&password=${encodeURIComponent(password)}&ip=${encodeURIComponent(ip)}`;
-  try{
-    const resp = await fetch(url);
-    const result = await resp.json();
+    const resp=await fetch(`${API_URL}?action=login&userId=${encodeURIComponent(uid)}&password=${encodeURIComponent(pwd)}`);
+    const result=await resp.json();
     if(result.success){
-      alert(`登入成功！分店：${result.store}`);
-      // 這裡可以導向 POS 主頁
-      window.location.href = "pos.html?user="+encodeURIComponent(result.user)+"&store="+encodeURIComponent(result.store);
-    } else {
-      msgEl.textContent = result.msg;
-    }
-  } catch(e){
-    msgEl.textContent = "登入錯誤，請稍後再試";
-  }
+      userId=result.user; storeName=result.store; userName=uid;
+      alert(`登入成功！分店：${storeName}`);
+      fetchProducts();
+    } else {msgEl.textContent=result.msg;}
+  }catch(e){msgEl.textContent="登入錯誤";}
 }
 
 // ===== 取得商品 =====
