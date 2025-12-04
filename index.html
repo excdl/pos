@@ -38,14 +38,16 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 </head>
 <body>
 
-<!-- 登入頁面 -->
-<div id="loginPage">
-  <h2>分店 POS 登入</h2>
-  <p id="storeName">分店: 讀取中...</p>
-  <input type="text" id="userIdInput" placeholder="登入人員ID">
-  <input type="password" id="passwordInput" placeholder="密碼">
+<title>POS 登入</title>
+</head>
+<body>
+<h3>POS 系統登入</h3>
+<div>
+  <label>使用者ID：<input type="text" id="userId"></label><br>
+  <label>密碼：<input type="password" id="password"></label><br>
   <button onclick="login()">登入</button>
 </div>
+<p id="msg" style="color:red;"></p>
 
 <!-- POS 主頁 -->
 <div id="posApp">
@@ -95,34 +97,40 @@ let products = [], categories = [], posCart = [];
 let currentTax = "應稅", editIndex = null, editingField = null, modalType = null;
 let userId = "", userName = "", storeName = "";
 
-// ===== 抓取分店 IP 與顯示 =====
-async function fetchStoreByIP(){
-  try {
-    const ipRes = await fetch("https://api.ipify.org?format=json");
-    const ipData = await ipRes.json();
-    const ip = ipData.ip;
-    // 假設後台 API 可以透過 IP 查分店名稱
-    const storeRes = await fetch(API_URL + "?action=getStore&ip=" + ip);
-    const storeData = await storeRes.json();
-    storeName = storeData.name || "未識別分店";
-    document.getElementById("storeName").innerText = "分店: " + storeName;
-  } catch(e){
-    console.error(e);
-    document.getElementById("storeName").innerText = "分店: 讀取失敗";
-  }
-}
-fetchStoreByIP();
+async function login(){
+  const userId = document.getElementById("userId").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const msgEl = document.getElementById("msg");
+  msgEl.textContent = "";
 
-// ===== 登入功能 =====
-function login(){
-  const id = document.getElementById("userIdInput").value.trim();
-  const pwd = document.getElementById("passwordInput").value.trim();
-  if(!id || !pwd){ alert("請輸入帳號與密碼"); return; }
-  // 簡單模擬驗證，可換成 API 驗證
-  userId = id; userName = id;
-  document.getElementById("loginPage").style.display="none";
-  document.getElementById("posApp").style.display="flex";
-  fetchProducts();
+  if(!userId || !password){
+    msgEl.textContent = "請輸入帳號密碼";
+    return;
+  }
+
+  // 抓外部 IP
+  let ip = "";
+  try{
+    const ipResp = await fetch("https://api.ipify.org?format=json");
+    const ipData = await ipResp.json();
+    ip = ipData.ip;
+  } catch(e){ console.log("抓 IP 失敗"); }
+
+  const WEBAPP_URL = "https://script.google.com/macros/s/你的WebAppID/exec";
+  const url = `${WEBAPP_URL}?action=login&userId=${encodeURIComponent(userId)}&password=${encodeURIComponent(password)}&ip=${encodeURIComponent(ip)}`;
+  try{
+    const resp = await fetch(url);
+    const result = await resp.json();
+    if(result.success){
+      alert(`登入成功！分店：${result.store}`);
+      // 這裡可以導向 POS 主頁
+      window.location.href = "pos.html?user="+encodeURIComponent(result.user)+"&store="+encodeURIComponent(result.store);
+    } else {
+      msgEl.textContent = result.msg;
+    }
+  } catch(e){
+    msgEl.textContent = "登入錯誤，請稍後再試";
+  }
 }
 
 // ===== 取得商品 =====
