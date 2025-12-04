@@ -61,6 +61,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 <!-- 登入頁 -->
 <div id="loginPage">
+  <p>門市：<span id="storeDisplay"></span></p>
   <h2>POS 登入</h2>
   <input type="text" id="storeInput" placeholder="門市編號">
   <input type="password" id="passwordInput" placeholder="密碼">
@@ -132,34 +133,43 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   </div>
 </div>
 
+
 <script>
-<script>
-const API_URL="https://script.google.com/macros/s/AKfycbzGbVOrV_Mk3HG2iQCPkLuiGQj4FkeO0Np94LvKHZOYp4hleoDBgZSTOzoSYaUb6Y7q/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbwO8EzCmMJ6RXhrXUEOC3dzJCK15dn1Yk4wRQBwj4IZA_qUnT3odAMM9FOIDePKVFXF/exec";
 let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
 let currentStore="";
 
 async function login(){
-  const pwd = document.getElementById("passwordInput").value;
+  const store = document.getElementById("storeInput").value.trim();
+  const pwd = document.getElementById("passwordInput").value.trim();
 
-  // 取得使用者外部 IP
-  const ipRes = await fetch('https://api.ipify.org?format=json');
-  const ipData = await ipRes.json();
-  const userIP = ipData.ip;
+  // 選擇性抓使用者 IP (可用第三方 API 取得)
+  let ip = "";
+  try{
+    const res = await fetch("https://api.ipify.org?format=json");
+    const data = await res.json();
+    ip = data.ip;
+  }catch(err){ ip=""; }
 
-  // 呼叫後端登入
-  const res = await fetch(`${API_URL}?action=login&ip=${userIP}&pwd=${pwd}`);
-  const data = await res.json();
+  const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${ip}`);
+  const result = await res.json();
 
-  if(data.status==="success"){
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("posApp").style.display = "flex";
-    currentStore = data.storeCode;
-    fetchProducts(); // 取商品
+  if(result.status==="success"){
+    // 登入成功，隱藏登入頁、顯示 POS 系統
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("posApp").style.display="flex";
+
+    // 顯示門市名稱
+    document.getElementById("storeDisplay").innerText = result.storeName;
+    
+    // 初始化 POS 資料
+    fetchProducts(store);
   } else {
-    document.getElementById("loginMsg").innerText = data.message;
+    document.getElementById("loginMsg").innerText = result.message;
   }
 }
+
 
 // ===== 取得商品 =====
 async function fetchProducts(){
