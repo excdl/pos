@@ -178,12 +178,18 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 const API_URL = "https://script.google.com/macros/s/AKfycbzz3Bsm8ntNDmFkHbNFlDzQJoIWChz2j8O5LVhv4sAx1iaXM1jBhJhZT5xEN4I9DF-6/exec";
 let products = [], categories = [], posCart = [];
 let currentTax = "應稅", editIndex = null, editingField = null, modalType=null;
-// 載入商品（無假商品）
-// products = [...] 可自行載入 API 或本地資料
-categories = [...new Set(products.map(x=>x["類別"]))];
-renderCategories();
-if(categories.length>0) renderProducts(categories[0]);
 
+// ----------- 載入商品 -----------
+async function fetchProducts(){
+  const res = await fetch(API_URL + "?action=products");
+  products = await res.json();
+  categories = [...new Set(products.map(x=>x["類別"]))];
+  renderCategories();
+  if(categories.length>0) renderProducts(categories[0]);
+}
+fetchProducts();
+
+// ----------- 渲染分類 -----------
 function renderCategories(){
   const box = document.getElementById("posCategories");
   box.querySelectorAll("button").forEach(b=>b.remove());
@@ -200,10 +206,14 @@ function renderCategories(){
   if(box.querySelector("button")) box.querySelector("button").classList.add("active");
 }
 
+// ----------- 搜尋 -----------
 document.getElementById("searchBox").oninput = function(){
   renderProducts(null,this.value.trim().toLowerCase());
 };
 
+
+
+// ----------- 商品列表 -----------
 function renderProducts(category=null,search=""){
   const box = document.getElementById("posProducts");
   box.innerHTML = "";
