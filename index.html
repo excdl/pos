@@ -59,14 +59,20 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 </head>
 <body>
 
-<!-- 登入頁 -->
-<div id="loginPage" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;">
-  <h2>POS 登入</h2>
-  <input type="text" id="storeInput" placeholder="門市編號">
-  <input type="password" id="passwordInput" placeholder="密碼">
-  <button onclick="login()">登入</button>
-  <p id="loginMsg" style="color:red;"></p>
+<!-- 登入頁面 -->
+<div id="loginPage" style="display:flex;justify-content:center;align-items:center;height:100vh;background:#3498db;">
+  <div style="background:white;padding:40px 30px;border-radius:12px;box-shadow:0 5px 20px rgba(0,0,0,0.2);width:320px;text-align:center;">
+    <h2 style="margin-bottom:20px;color:#2c3e50;">台灣生鮮 POS 登入</h2>
+    <input id="storeInput" placeholder="門市編號" style="width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <input id="pwdInput" placeholder="密碼" type="password" style="width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <input id="ipInput" placeholder="IP (選填)" style="width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <button id="loginBtn" style="width:100%;padding:12px;margin-top:15px;border:none;border-radius:6px;background:#27ae60;color:white;font-size:1em;cursor:pointer;transition:0.2s;">
+      登入
+    </button>
+    <p id="loginMsg" style="color:red;margin-top:10px;font-size:0.9em;"></p>
+  </div>
 </div>
+
 
 <div id="posApp" style="display:none;">
   <div id="posCategories">
