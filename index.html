@@ -60,7 +60,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 <body>
 
 <!-- 登入頁 -->
-<div id="loginPage">
+<div id="loginPage" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;">
   <h2>POS 登入</h2>
   <input type="text" id="storeInput" placeholder="門市編號">
   <input type="password" id="passwordInput" placeholder="密碼">
@@ -68,7 +68,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   <p id="loginMsg" style="color:red;"></p>
 </div>
 
-<!-- POS 主頁（初始隱藏） -->
 <div id="posApp" style="display:none;">
   <div id="posCategories">
     <input type="text" id="searchBox" placeholder="搜尋商品">
@@ -133,45 +132,193 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   </div>
 </div>
 
-
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbwO8EzCmMJ6RXhrXUEOC3dzJCK15dn1Yk4wRQBwj4IZA_qUnT3odAMM9FOIDePKVFXF/exec";
+// ===== 變數與初始 =====
+const API_URL = "https://script.google.com/macros/s/AKfycbzEHFzA42ZOSHMXIF9ZYIgtAXZstxJeIB3EsbN_d1u9Cg5Rc1OHP2ldMfR_gSLd6UaB/exec"; 
+const PRODUCT_SHEET="商品清單";
+const CHECKOUT_SHEET="結帳";
+const DETAIL_SHEET="銷貨明細";
+const STORE_SHEET="登入門市";
+
+// =========================
+// GET 資料
+// =========================
+function doGet(e){
+  const action = e.parameter.action;
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+
+  // ===== 登入驗證 =====
+  if(action === "login"){
+    const store = e.parameter.store;  // 門市編號
+    const pwd = e.parameter.pwd;
+    const userIP = e.parameter.ip || "";    // IP 用來顯示門市名稱，可忽略
+
+    const storeSheet = ss.getSheetByName(STORE_SHEET);
+    const data = storeSheet.getDataRange().getValues().slice(1);
+
+    // 找門市編號
+    const storeMatch = data.find(r => r[0] === store);
+
+    if(storeMatch && storeMatch[1] === pwd){
+      // 嘗試找 IP 對應的門市名稱（若找不到就用門市名稱）
+      const ipMatch = data.find(r => r[2] === userIP);
+      const storeName = ipMatch ? ipMatch[1] : storeMatch[0];
+
+      return ContentService.createTextOutput(JSON.stringify({
+        status:"success",
+        storeCode: storeMatch[0],
+        storeName: storeName
+      })).setMimeType(ContentService.MimeType.JSON);
+    } else {
+      return ContentService.createTextOutput(JSON.stringify({
+        status:"error",
+        message:"門市編號或密碼錯誤"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // ===== 取得門市資料（選單用） =====
+  if(action === "stores"){
+    const storeSheet = ss.getSheetByName(STORE_SHEET);
+    const data = storeSheet.getDataRange().getValues().slice(1);
+    const stores = data.map(r=>({store:r[0],pwd:r[1]}));
+    return ContentService.createTextOutput(JSON.stringify(stores))
+        .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // ===== 取得商品資料 =====
+  if(action === "products"){
+    const store = e.parameter.store;
+    const sheet = ss.getSheetByName(PRODUCT_SHEET);
+    const rows = sheet.getDataRange().getValues();
+    const headers = rows[0];
+    const col = {};
+    headers.forEach((h,i)=>col[h]=i);
+
+    const products = rows.slice(1)
+      .filter(r=>r[col["是否上架"]] === "是")
+      .map(r=>({
+        "商品名稱": r[col["商品名稱"]],
+        "售價": parseFloat(r[col["價格"]]) || 0,
+        "庫存": col[store]!==undefined ? (parseFloat(r[col[store]])||0) : 0,
+        "類別": r[col["分類"]],
+        "特色說明": r[col["商品簡介"]],
+        "單位": r[col["單位"]],
+        "商品照片": r[col["圖片連結"]] || ""
+      }));
+
+    return ContentService.createTextOutput(JSON.stringify(products))
+        .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({status:"error",message:"未知 action"}))
+        .setMimeType(ContentService.MimeType.JSON);
+}
+
+// =========================
+// POST 結帳
+// =========================
+function doPost(e){
+  try{
+    const data = JSON.parse(e.postData.contents);
+    if(!data.items || data.items.length===0){
+      return ContentService.createTextOutput(JSON.stringify({status:"error",message:"購物車為空"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const checkoutSheet = ss.getSheetByName(CHECKOUT_SHEET);
+    const detailSheet = ss.getSheetByName(DETAIL_SHEET);
+    const productSheet = ss.getSheetByName(PRODUCT_SHEET);
+
+    const now = new Date();
+    const rocYear = (now.getFullYear()-1911).toString();
+    const orderId = rocYear + Utilities.formatDate(now,"GMT+8","MMddHHmmss") + "_" + data.store + "_" + (data.posMachine||"POS01");
+
+    const discount = parseFloat(data.discount) || 0;
+    const tax = parseFloat(data.tax) || 0;
+    const subtotal = data.items.reduce((sum,i)=>sum + parseFloat(i.price)*parseFloat(i.quantity),0);
+    const totalAmount = subtotal - discount + tax;
+
+    // 記錄結帳
+    checkoutSheet.appendRow([
+      orderId,
+      Utilities.formatDate(now,"GMT+8","yyyy/MM/dd"),
+      Utilities.formatDate(now,"GMT+8","HH:mm:ss"),
+      data.store,
+      data.posMachine||"POS01",
+      subtotal,
+      discount,
+      tax,
+      totalAmount,
+      data.paymentMethod
+    ]);
+
+    // 更新銷貨明細與扣庫存
+    const productRows = productSheet.getDataRange().getValues();
+    const productHeaders = productRows[0];
+    const storeCol = productHeaders.indexOf(data.store);
+
+    data.items.forEach(item=>{
+      // 銷貨明細
+      detailSheet.appendRow([
+        orderId,
+        item.name,
+        item.quantity,
+        item.price,
+        item.quantity*item.price,
+        data.store,
+        data.posMachine||"POS01"
+      ]);
+
+      // 扣庫存
+      for(let i=1;i<productRows.length;i++){
+        if(productRows[i][0]===item.name && storeCol>=0){
+          let newStock = (parseFloat(productRows[i][storeCol])||0) - parseFloat(item.quantity);
+          productSheet.getRange(i+1, storeCol+1).setValue(newStock);
+          break;
+        }
+      }
+    });
+
+    return ContentService.createTextOutput(JSON.stringify({status:"success",orderId}))
+          .setMimeType(ContentService.MimeType.JSON);
+  }catch(err){
+    return ContentService.createTextOutput(JSON.stringify({status:"error",message:err.message}))
+          .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+";
 let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
-let currentStore="";
 
-const API_URL = "https://你的AppsScript網址/exec";
-let POS_STORE = "";
+let POS_STORE = ""; // 登入後的門市編號
 
 function login(){
   const store = document.getElementById("storeInput").value.trim();
   const pwd = document.getElementById("passwordInput").value.trim();
-
   if(!store || !pwd){
-    document.getElementById("loginMsg").innerText = "請輸入門市編號及密碼";
+    document.getElementById("loginMsg").innerText="請輸入門市編號及密碼";
     return;
   }
 
   fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}`)
-    .then(res => res.json())
-    .then(res => {
-      if(res.status === "success"){
-        document.getElementById("loginPage").style.display = "none";
-        document.getElementById("posApp").style.display = "flex";
-        POS_STORE = res.storeCode; // 後續 GET 商品使用
-        alert("歡迎：" + res.storeName);
-        // 可呼叫函式載入商品與分類
-        fetchProducts(POS_STORE);
+    .then(res=>res.json())
+    .then(res=>{
+      if(res.status==="success"){
+        document.getElementById("loginPage").style.display="none";
+        document.getElementById("posApp").style.display="flex";
+        POS_STORE = res.storeCode; // 可以用來帶入商品 API
+        alert("歡迎："+res.storeName);
+        fetchProducts(); // 登入成功後再載入商品
       } else {
-        document.getElementById("loginMsg").innerText = res.message;
+        document.getElementById("loginMsg").innerText=res.message;
       }
     })
-    .catch(err => {
-      document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
+    .catch(err=>{
+      document.getElementById("loginMsg").innerText="登入失敗，請稍後再試";
       console.error(err);
     });
 }
-
 
 
 // ===== 取得商品 =====
@@ -182,7 +329,7 @@ async function fetchProducts(){
   renderCategories();
   if(categories.length>0) renderProducts(categories[0]);
 }
-fetchProducts();
+//fetchProducts();
 
 // ===== 渲染分類 =====
 function renderCategories(){
@@ -402,6 +549,8 @@ document.getElementById("posCheckout").onclick=function(){
 </div>
 </body>
 </html>
+
+
 
 
 
