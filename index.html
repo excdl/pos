@@ -130,65 +130,64 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 <!-- 列印收據區 -->
 <div id="printArea"></div>
-
 <script>
-// ===== 變數與初始 =====
 const API_URL = "https://script.google.com/macros/s/AKfycbyJOJ2IM5I7i5H-oSqrZoa_0Ytda5u0KXyzFaiQ6ch22netc3s1J28h9HZANFGuUQn-/exec";
 let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
 let POS_STORE = ""; // 登入後的門市編號
 
-  async function getIP() {
+// ====== 更快的 IP 取得（含 sessionStorage 快取）======
+async function getIP() {
+    const cache = sessionStorage.getItem("myIP");
+    if (cache) return cache;
+
     try {
-      const res = await fetch('https://api.ipify.org?format=json');
-      const data = await res.json();
-      return data.ip;
-    } catch (err) {
-      console.error('Error fetching IP address', err);
-      return 'unknown'; // 返回錯誤時的默認 IP
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        sessionStorage.setItem("myIP", data.ip);
+        return data.ip;
+    } catch {
+        return "";
     }
+}
+  
+async function login(){
+  const store = document.getElementById("storeInput").value.trim();
+  const pwd = document.getElementById("passwordInput").value.trim();
+  if(!store || !pwd){
+    document.getElementById("loginMsg").innerText="請輸入門市編號及密碼";
+    return;
   }
 
-  async function login() {
-    const store = document.getElementById("storeInput").value.trim();
-    const pwd = document.getElementById("passwordInput").value.trim();
-    if (!store || !pwd) {
-      document.getElementById("loginMsg").innerText = "請輸入門市編號及密碼";
-      return;
-    }
+  // ★ 取得 IP
+  const userIP = await getIP();
 
-    // 取得 IP
-    const userIP = await getIP();
+  fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`)
+    .then(res=>res.json())
+    .then(res=>{
+      if(res.status==="success"){
+        document.getElementById("loginPage").style.display="none";
+        document.getElementById("posApp").style.display="flex";
+        POS_STORE = res.storeCode;
 
-    try {
-      const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`);
-      const data = await res.json();
-
-      if (data.status === "success") {
-        // 登入成功顯示 POS 頁面
-        document.getElementById("loginPage").style.display = "none";
-        document.getElementById("posApp").style.display = "flex";
-        POS_STORE = data.storeCode;
-
-        // 顯示門市名稱、編號、登入時間
+        // ★ 顯示門市名稱、編號、登入時間
         const now = new Date();
         const timeStr = now.toLocaleString("zh-TW", { hour12: false });
-        document.getElementById("storeInfo").innerHTML =
-          `${data.storeName}（${data.storeCode}）<br>${timeStr}`;
+        document.getElementById("storeInfo").innerHTML = 
+            `${res.storeName}（${res.storeCode}）<br>${timeStr}`;
 
-        // 啟動時鐘更新
-        setInterval(updateLoginTime, 1000); // 每秒更新一次時間
-
-        alert("歡迎：" + data.storeName);
+        alert("歡迎：" + res.storeName);
         fetchProducts();
       } else {
-        document.getElementById("loginMsg").innerText = data.message;
+        document.getElementById("loginMsg").innerText=res.message;
       }
-    } catch (err) {
-      document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
+    })
+    .catch(err=>{
+      document.getElementById("loginMsg").innerText="登入失敗，請稍後再試";
       console.error(err);
-    }
-  }
+    });
+}
+
 
 // ===== 取得商品 =====
 async function fetchProducts(){
