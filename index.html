@@ -162,7 +162,7 @@ async function login() {
 
   const store = document.getElementById("storeInput").value;
   const pwd = document.getElementById("passwordInput").value;
-  const userIP = "127.0.0.1"; // 可替換成實際 IP 來源
+  const userIP = await getIP();
 
   try {
     const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`);
