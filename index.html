@@ -152,40 +152,36 @@ async function getIP() {
 }
 
 // ===== 登入 =====
-async function login() {
-    const store = document.getElementById("storeInput").value.trim();
-    const pwd = document.getElementById("passwordInput").value.trim();
-    if (!store || !pwd) {
-        document.getElementById("loginMsg").innerText = "請輸入門市編號及密碼";
-        return;
-    }
-
-    const userIP = await getIP();
+ // 定義 login 函數
+  function login() {
+    const store = document.getElementById("storeInput").value;
+    const pwd = document.getElementById("passwordInput").value;
+    const userIP = "127.0.0.1"; // 或者從其他地方獲取 IP 地址
 
     fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`)
-        .then(res => res.json())
-        .then(res => {
-            if (res.status === "success") {
-                document.getElementById("loginPage").style.display = "none";
-                document.getElementById("posApp").style.display = "flex";
-                POS_STORE = res.storeCode;
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === "success") {
+          document.getElementById("loginPage").style.display = "none";
+          document.getElementById("posApp").style.display = "flex";
+          POS_STORE = res.storeCode;
+          const now = new Date();
+          const timeStr = now.toLocaleString("zh-TW", { hour12: false });
+          document.getElementById("storeInfo").innerHTML = 
+            `${res.storeName}（${res.storeCode}）<br>${timeStr}`;
+          setInterval(updateLoginTime, 1000); // 每秒更新一次時間
+          alert("歡迎：" + res.storeName);
+          fetchProducts();
+        } else {
+          document.getElementById("loginMsg").innerText = res.message;
+        }
+      })
+      .catch(err => {
+        document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
+        console.error(err);
+      });
+  }
 
-                const now = new Date();
-                const timeStr = now.toLocaleString("zh-TW", { hour12: false });
-                document.getElementById("storeInfo").innerHTML =
-                    `${res.storeName}（${res.storeCode}）<br>${timeStr}`;
-
-                alert("歡迎：" + res.storeName);
-                fetchProducts();
-            } else {
-                document.getElementById("loginMsg").innerText = res.message;
-            }
-        })
-        .catch(err => {
-            document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
-            console.error(err);
-        });
-}
 
 // ===== 取得商品 =====
 async function fetchProducts() {
