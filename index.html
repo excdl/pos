@@ -110,6 +110,23 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyQuNv1WeGbQec9LNKyBTgq
 let POS_STORE = "";
 let posCart = [], currentTax = "應稅";
 
+  // ====== 更快的 IP 取得（含 sessionStorage 快取）======
+async function getIP() {
+    const cache = sessionStorage.getItem("myIP");
+    if (cache) return cache;
+
+    try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        sessionStorage.setItem("myIP", data.ip);
+        return data.ip;
+    } catch {
+        return "";
+    }
+}
+
+
+
 function updateLoginTime() {
   const now = new Date();
   document.getElementById("loginTime").innerText = `登入時間：${now.toLocaleString("zh-TW",{hour12:false})}`;
@@ -122,29 +139,47 @@ async function login() {
 
   const store = document.getElementById("storeInput").value;
   const pwd = document.getElementById("passwordInput").value;
+  const userIP = "127.0.0.1"; // 可替換成實際 IP 來源
 
   try {
-    const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}`);
+    const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`);
     const data = await res.json();
-    if(data.status==="success"){
+
+    if (data.status === "success") {
       POS_STORE = data.storeCode;
-      document.getElementById("loginPage").style.display="none";
-      document.getElementById("posApp").style.display="flex";
+
+      // 隱藏登入頁，顯示 POS
+      document.getElementById("loginPage").style.display = "none";
+      document.getElementById("posApp").style.display = "flex";
+
+      // 顯示門市資訊
       document.getElementById("storeInfo").innerText = `${data.storeName}（${data.storeCode}）`;
+
+      // 更新並每秒刷新登入時間
       updateLoginTime();
-      setInterval(updateLoginTime,1000);
+      setInterval(updateLoginTime, 1000);
+
+      
+      // 取得商品資料
       fetchProducts();
     } else {
-      document.getElementById("loginMsg").innerText=data.message;
-      loginBtn.innerText="登入";
-      loginBtn.disabled=false;
+      document.getElementById("loginMsg").innerText = data.message;
+      loginBtn.innerText = "登入";
+      loginBtn.disabled = false;
     }
-  } catch(err){
+  } catch (err) {
     console.error(err);
-    document.getElementById("loginMsg").innerText="登入失敗，請稍後再試";
-    loginBtn.innerText="登入";
-    loginBtn.disabled=false;
+    document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
+    loginBtn.innerText = "登入";
+    loginBtn.disabled = false;
   }
+}
+
+// ===== 更新登入時間 =====
+function updateLoginTime() {
+  const now = new Date();
+  const timeStr = now.toLocaleString("zh-TW", { hour12: false });
+  document.getElementById("loginTime").innerText = `登入時間：${timeStr}`;
 }
 
 document.getElementById("logoutBtn").onclick = logout;
