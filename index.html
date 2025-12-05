@@ -154,10 +154,25 @@ let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
 let POS_STORE = ""; // 登入後的門市編號
 
-  async function login(){
-  const store = document.getElementById("storeInput").value.trim();
-  const pwd = document.getElementById("passwordInput").value.trim();
-  if(!store || !pwd){
+// ====== 更快的 IP 取得（含 sessionStorage 快取）======
+async function getIP() {
+    const cache = sessionStorage.getItem("myIP");
+    if (cache) return cache;
+
+    try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        sessionStorage.setItem("myIP", data.ip);
+        return data.ip;
+    } catch {
+        return "";
+    }
+}
+  
+async function login(){
+const store = document.getElementById("storeInput").value.trim();
+const pwd = document.getElementById("passwordInput").value.trim();
+if(!store || !pwd){
     document.getElementById("loginMsg").innerText="請輸入門市編號及密碼";
     return;
   }
