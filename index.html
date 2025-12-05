@@ -192,7 +192,7 @@ fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`)
         document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
         console.error(err);
     });
-
+}
 // ===== 取得商品 =====
 async function fetchProducts(){
   const res = await fetch(API_URL+"?action=products");
