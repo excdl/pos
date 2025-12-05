@@ -130,6 +130,8 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 <!-- 列印收據區 -->
 <div id="printArea"></div>
+
+  
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyJOJ2IM5I7i5H-oSqrZoa_0Ytda5u0KXyzFaiQ6ch22netc3s1J28h9HZANFGuUQn-/exec";
 let products = [], categories = [], posCart = [];
@@ -151,9 +153,15 @@ async function getIP() {
     }
 }
 
+// ===== 更新登入時間 =====
+function updateLoginTime() {
+    const now = new Date();
+    const timeStr = now.toLocaleString("zh-TW", { hour12: false });
+    document.getElementById("storeInfo").innerText = `登入時間：${timeStr}`;
+}
+
 // ===== 登入 =====
- // 定義 login 函數
-  function login() {
+function login() {
     const store = document.getElementById("storeInput").value;
     const pwd = document.getElementById("passwordInput").value;
     const userIP = "127.0.0.1"; // 或者從其他地方獲取 IP 地址
@@ -165,11 +173,16 @@ async function getIP() {
           document.getElementById("loginPage").style.display = "none";
           document.getElementById("posApp").style.display = "flex";
           POS_STORE = res.storeCode;
+          
+          // 顯示門市名稱、編號和登入時間
           const now = new Date();
           const timeStr = now.toLocaleString("zh-TW", { hour12: false });
           document.getElementById("storeInfo").innerHTML = 
             `${res.storeName}（${res.storeCode}）<br>${timeStr}`;
+
+          // 啟動時鐘更新
           setInterval(updateLoginTime, 1000); // 每秒更新一次時間
+
           alert("歡迎：" + res.storeName);
           fetchProducts();
         } else {
@@ -180,7 +193,7 @@ async function getIP() {
         document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
         console.error(err);
       });
-  }
+}
 
 
 // ===== 取得商品 =====
