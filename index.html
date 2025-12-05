@@ -263,20 +263,38 @@ document.getElementById("searchBox").oninput=function(){
 };
 
 // ===== 渲染商品 =====
-function renderProducts(category=null,search=""){
-  const box=document.getElementById("posProducts");
-  box.innerHTML="";
-  products.filter(p=>{
-    if(category && p["類別"]!==category) return false;
-    if(search && !p["商品名稱"].toLowerCase().includes(search)) return false;
-    return true;
-  }).forEach(p=>{
-    const card=document.createElement("div");
-    card.className="product-card";
-    card.innerHTML=`<img src="${p["商品照片"]}"><h4>${p["商品名稱"]}</h4><p>${p["售價"]} 元 / ${p["單位"]}</p>`;
-    card.onclick=()=>addPOSItem(p);
-    box.appendChild(card);
-  });
+function renderCategories() {
+    const box = document.getElementById("categoryList");
+    box.innerHTML = ""; // 清空舊分類
+
+    categories.forEach(cat => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.textContent = cat;
+        btn.style.width = "100%";
+        btn.style.marginBottom = "5px";
+        btn.onclick = () => {
+            document.querySelectorAll("#categoryList button").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            renderProducts(cat); // 依分類渲染商品
+        };
+        li.appendChild(btn);
+        box.appendChild(li);
+    });
+
+    // 預設第一個分類為 active
+    const firstBtn = box.querySelector("button");
+    if (firstBtn) firstBtn.classList.add("active");
+}
+
+// --------------------
+// 更新店鋪資訊
+// --------------------
+function setStoreInfo(store) {
+    currentStore = store;
+    const info = document.getElementById("storeInfo");
+    const now = new Date();
+    info.textContent = `${store.name} (${store.code}) - ${now.toLocaleTimeString()}`;
 }
 
 // ===== 加入購物車 =====
