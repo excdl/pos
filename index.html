@@ -73,8 +73,24 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 <!-- POS 主頁 -->
 <div id="posApp" style="display:none;">
   <div id="posCategories">
-    <div id="storeInfo" style="font-size:14px;font-weight:bold;margin-bottom:10px;"></div>
-    <button id="logoutBtn" style="margin-bottom:10px;font-size:13px; background-color:#FFE066; border:none; padding:5px 10px; cursor:pointer;">登出</button>
+    <!-- 顯示門市名稱和編號 -->
+    <div id="storeInfo" style="font-size:14px; font-weight:bold; margin-bottom:10px;"></div>
+    <!-- 顯示登入時間 -->
+    <div id="loginTime" style="font-size:12px; color: gray; margin-bottom: 10px;"></div>
+    
+    <!-- 登出按鈕 -->
+    <button id="logoutBtn" style="margin-bottom:10px; font-size:13px; background-color:#FFE066; border:none; padding:5px 10px; cursor:pointer;">
+      登出
+    </button>
+    
+    <!-- 搜尋商品欄位 -->
+    <input type="text" id="searchBox" placeholder="搜尋商品">
+    
+    <h3>分類</h3>
+  </div>
+  <!-- 其他内容... -->
+</div>
+
     <input type="text" id="searchBox" placeholder="搜尋商品">
     <h3>分類</h3>
   </div>
@@ -132,7 +148,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 <div id="printArea"></div>
 
   
-<script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyJOJ2IM5I7i5H-oSqrZoa_0Ytda5u0KXyzFaiQ6ch22netc3s1J28h9HZANFGuUQn-/exec";
 let products = [], categories = [], posCart = [];
 let currentTax = "應稅", editIndex = null, editingField = null, modalType = null;
@@ -157,7 +172,8 @@ async function getIP() {
 function updateLoginTime() {
     const now = new Date();
     const timeStr = now.toLocaleString("zh-TW", { hour12: false });
-    document.getElementById("storeInfo").innerText = `登入時間：${timeStr}`;
+    // 更新时间部分，不影响门市信息
+    document.getElementById("loginTime").innerText = `登入時間：${timeStr}`;
 }
 
 // ===== 登入 =====
@@ -174,14 +190,17 @@ function login() {
           document.getElementById("posApp").style.display = "flex";
           POS_STORE = res.storeCode;
           
-          // 顯示門市名稱、編號和登入時間
+          // 顯示門市名稱和編號
+          document.getElementById("storeInfo").innerHTML = 
+            `${res.storeName}（${res.storeCode}）`; // 仅显示门市信息，不更新时间部分
+
+          // 顯示登入時間
           const now = new Date();
           const timeStr = now.toLocaleString("zh-TW", { hour12: false });
-          document.getElementById("storeInfo").innerHTML = 
-            `${res.storeName}（${res.storeCode}）<br>${timeStr}`;
+          document.getElementById("loginTime").innerText = `登入時間：${timeStr}`;
 
           // 啟動時鐘更新
-          setInterval(updateLoginTime, 1000); // 每秒更新一次時間
+          setInterval(updateLoginTime, 1000); // 每秒更新一次时间
 
           alert("歡迎：" + res.storeName);
           fetchProducts();
@@ -194,6 +213,7 @@ function login() {
         console.error(err);
       });
 }
+
 
 
 // ===== 取得商品 =====
