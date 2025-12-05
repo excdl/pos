@@ -125,13 +125,31 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 <!-- 列印收據區 -->
 <div id="printArea"></div>
+<div id="toast"
+     style="
+        display:none;
+        position:fixed;
+        bottom:30px;
+        left:50%;
+        transform:translateX(-50%);
+        background:#27ae60;
+        color:white;
+        padding:12px 20px;
+        border-radius:6px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.3);
+        font-size:16px;
+        z-index:99999;
+     ">
+</div>
 
+</body>
 
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyQuNv1WeGbQec9LNKyBTgqOAX9SCazJNOWNhzymdeQk5mzHh1utX0fSfhAvAwc9Sqs/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzZ-b2XRwSFVOi6smZPYp6yP0bWcMEwLu8_a6nwaeqemN_fFjbWCjTAxHZE9YyrNeeX/exec";
 let POS_STORE = "";
 let posCart = [], currentTax = "應稅";
+let isCheckoutProcessing = false;
 
   // ====== 更快的 IP 取得（含 sessionStorage 快取）======
 async function getIP() {
@@ -357,7 +375,17 @@ function openEditModal(index, field) {
     document.getElementById("editModal").style.display = "flex";
 }
 
-function openPromoModal(item) {
+function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+    t.style.display = "block";
+
+    setTimeout(() => {
+        t.style.display = "none";
+    }, 2000);
+}
+
+  function openPromoModal(item) {
     modalType = 'promo'; editIndex = null;
     document.getElementById("numpad").style.display = 'none';
     const promoDiv = document.getElementById("promoButtons");
@@ -434,8 +462,94 @@ function updateChange() {
     document.getElementById("changeOut").innerText = Math.max(0, cash - total).toFixed(0);
 }
 
+async function sendCheckoutToSheet() {
+    if (isCheckoutProcessing) {
+        console.log("結帳處理中，忽略重複點擊");
+        return;
+    }
+
+    if (posCart.length === 0) {
+        alert("購物車為空");
+        return;
+    }
+
+    isCheckoutProcessing = true; // 🔒 開啟鎖定
+    document.getElementById("posCheckout").disabled = true;
+    document.getElementById("posCheckout").innerText = "處理中...";
+
+    const now = new Date();
+    const rocYear = now.getFullYear() - 1911;
+    const orderId =
+        rocYear.toString() +
+        (now.getMonth() + 1).toString().padStart(2, "0") +
+        now.getDate().toString().padStart(2, "0") +
+        now.getHours().toString().padStart(2, "0") +
+        now.getMinutes().toString().padStart(2, "0") +
+        now.getSeconds().toString().padStart(2, "0") +
+        Math.floor(Math.random() * 900 + 100).toString(); // 3位亂數
+
+    const orderDate = now.toLocaleDateString("zh-TW");
+    const orderTime = now.toLocaleTimeString("zh-TW", { hour12: false });
+
+    const payload = {
+        action: "checkout",
+        orderId,
+        orderDate,
+        orderTime,
+        userId: POS_STORE,
+        userName: document.getElementById("storeInfo").innerText,
+        status: currentTax,
+        checkoutDateTime: orderDate + " " + orderTime,
+        freight: 0,
+        totalAmount: Number(document.getElementById("posTotal").innerText),
+        paymentMethod: document.getElementById("posPayment").value,
+        items: posCart.map(item => ({
+            name: item.name,
+            category: item.category || "",
+            quantity: item.quantity,
+            price: item.price,
+            subtotal: (item.quantity * item.price).toFixed(0),
+            detail: item.discount ? (item.discount.type || (item.discount.rate * 100 + "%")) : ""
+        }))
+    };
+
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.status !== "success") {
+            alert("寫入失敗：" + data.message);
+        } else {
+            // ⭐ 顯示簡短成功提示
+            showToast("結帳成功！訂單編號：" + orderId);
+
+            // ⭐ 重新讀取商品資料 → 更新庫存
+            fetchProducts();
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert("結帳發生錯誤：" + err.message);
+    }
+
+    // 🔓 解鎖
+    isCheckoutProcessing = false;
+    document.getElementById("posCheckout").disabled = false;
+    document.getElementById("posCheckout").innerText = "結帳列印";
+}
+
+  
 // ===== 小票列印 =====
-document.getElementById("posCheckout").onclick = function () {
+document.getElementById("posCheckout").onclick = async function () {
+
+    await sendCheckoutToSheet();  // ⭐⭐⭐ 先寫入試算表 ⭐⭐⭐
+
+    
+};
+
     // ===== 格式化小票內容 =====
     function getMaxLength() {
         let maxNameLen = 0, maxQtyLen = 0, maxPriceLen = 0, maxSubtotalLen = 0;
