@@ -125,33 +125,13 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 <!-- 列印收據區 -->
 <div id="printArea"></div>
-<div id="orderLinkBox"
-     style="
-        display:none;
-        position:fixed;
-        bottom:90px;
-        left:50%;
-        transform:translateX(-50%);
-        background:#34495e;
-        color:white;
-        padding:10px 20px;
-        border-radius:6px;
-        font-size:16px;
-        z-index:99999;
-     ">
-    <a id="orderLink" href="#" target="_blank" style="color:#00eaff;text-decoration:underline;">
-    </a>
-</div>
 
-
-</body>
 
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycby-RnVmJubnJKx7ymN1KLZamq3I4Gy5ct2zyMR4mYJEoHnPO-QgJ44YJ5aCUKq7FYOt/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyQuNv1WeGbQec9LNKyBTgqOAX9SCazJNOWNhzymdeQk5mzHh1utX0fSfhAvAwc9Sqs/exec";
 let POS_STORE = "";
 let posCart = [], currentTax = "應稅";
-let isCheckoutProcessing = false;
 
   // ====== 更快的 IP 取得（含 sessionStorage 快取）======
 async function getIP() {
@@ -377,11 +357,7 @@ function openEditModal(index, field) {
     document.getElementById("editModal").style.display = "flex";
 }
 
-
-
-
-
-  function openPromoModal(item) {
+function openPromoModal(item) {
     modalType = 'promo'; editIndex = null;
     document.getElementById("numpad").style.display = 'none';
     const promoDiv = document.getElementById("promoButtons");
@@ -458,130 +434,8 @@ function updateChange() {
     document.getElementById("changeOut").innerText = Math.max(0, cash - total).toFixed(0);
 }
 
-// Toast 提示
-function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.innerText = msg;
-    t.style.display = "block";
-
-    setTimeout(() => {
-        t.style.display = "none";
-    }, 2000);
-}
-
-// 顯示訂單查詢連結
-function showOrderLink(orderId) {
-    const url = ORDER_QUERY_URL + "?orderId=" + orderId;
-    const box = document.getElementById("orderLinkBox");
-    const link = document.getElementById("orderLink");
-
-    link.href = url;
-    link.innerText = "查看訂單：" + orderId;
-
-    box.style.display = "block";
-
-    // 3 秒後自動淡出
-    setTimeout(() => {
-        box.style.display = "none";
-    }, 3000);
-}
-
-async function sendCheckoutToSheet() { 
-    if (isCheckoutProcessing) {
-        console.log("結帳處理中，忽略重複點擊");
-        return;
-    }
-
-    if (posCart.length === 0) {
-        alert("購物車為空");
-        return;
-    }
-
-    // 🔒 開鎖定
-    isCheckoutProcessing = true;
-    const checkoutBtn = document.getElementById("posCheckout");
-    checkoutBtn.disabled = true;
-    checkoutBtn.innerText = "處理中...";
-
-    // 產生訂單編號
-    const now = new Date();
-    const rocYear = now.getFullYear() - 1911;
-    const orderId =
-        rocYear.toString() +
-        (now.getMonth() + 1).toString().padStart(2, "0") +
-        now.getDate().toString().padStart(2, "0") +
-        now.getHours().toString().padStart(2, "0") +
-        now.getMinutes().toString().padStart(2, "0") +
-        now.getSeconds().toString().padStart(2, "0") +
-        Math.floor(Math.random() * 900 + 100).toString(); // 3位亂數
-
-    const orderDate = now.toLocaleDateString("zh-TW");
-    const orderTime = now.toLocaleTimeString("zh-TW", { hour12: false });
-
-    // 建立 payload
-    const payload = {
-        action: "checkout",
-        orderId,
-        orderDate,
-        orderTime,
-        userId: POS_STORE,
-        userName: document.getElementById("storeInfo").innerText,
-        status: currentTax,
-        checkoutDateTime: orderDate + " " + orderTime,
-        freight: 0,
-        totalAmount: Number(document.getElementById("posTotal").innerText),
-        paymentMethod: document.getElementById("posPayment").value,
-        items: posCart.map(item => ({
-            name: item.name,
-            category: item.category || "",
-            quantity: item.quantity,
-            price: item.price,
-            subtotal: (item.quantity * item.price).toFixed(0),
-            detail: item.discount ? (item.discount.type || (item.discount.rate * 100 + "%")) : ""
-        }))
-    };
-
-    try {
-        const res = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-
-        if (data.status !== "success") {
-            alert("寫入失敗：" + data.message);
-        } else {
-            // ✅ 結帳成功提示
-            showToast("結帳成功！訂單編號：" + orderId);
-
-            // ✅ 顯示可點選查單連結
-            showOrderLink(orderId);
-
-            // ✅ 更新庫存
-            fetchProducts();
-        }
-
-    } catch (err) {
-        console.error(err);
-        alert("結帳發生錯誤：" + err.message);
-    }
-
-    // 🔓 解鎖
-    isCheckoutProcessing = false;
-    checkoutBtn.disabled = false;
-    checkoutBtn.innerText = "結帳列印";
-}
-
-
-  
 // ===== 小票列印 =====
-document.getElementById("posCheckout").onclick = async function () {
-
-    await sendCheckoutToSheet();  // ⭐⭐⭐ 先寫入試算表 ⭐⭐⭐
-
-    
-};
-
+document.getElementById("posCheckout").onclick = function () {
     // ===== 格式化小票內容 =====
     function getMaxLength() {
         let maxNameLen = 0, maxQtyLen = 0, maxPriceLen = 0, maxSubtotalLen = 0;
