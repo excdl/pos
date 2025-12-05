@@ -42,27 +42,18 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 .confirm{background:#27ae60;color:white;}
 .cancel{background:#e74c3c;color:white;}
 .convert{background:#f39c12;color:white;}
-
-/* 動態鍵盤大小 */
 @media (max-width:600px){
   #numpad button{padding:20px;font-size:1.5em;}
   #editModal input{font-size:1.8em;}
 }
-/* 優惠模式：隱藏輸入框並移除空間 */
-#editModal.promoMode #modalInput {
-    display: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    height: 0 !important;
-}  
+#editModal.promoMode #modalInput {display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important;}  
 
-/* 結帳 Modal */
-#checkoutModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:10000;}
-#checkoutModal .checkoutContent{background:white;padding:20px;border-radius:12px;width:320px;max-height:90%;overflow:auto;}
-#checkoutModal table{width:100%;border-collapse:collapse;margin-top:10px;}
-#checkoutModal th, #checkoutModal td{border-bottom:1px solid #ddd;padding:4px;text-align:center;}
-#checkoutModal td{text-align:right;}
-#checkoutModal td:first-child{text-align:left;}
+/* 收據列印專用 */
+#printArea{display:none;width:58mm;font-size:12px;line-height:1.2em;}
+#printArea h4{text-align:center;margin:2px 0;}
+#printArea table{width:100%;border-collapse:collapse;}
+#printArea td{text-align:left;}
+#printArea td.right{text-align:right;}
 </style>
 </head>
 <body>
@@ -70,20 +61,10 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 <!-- 登入頁面 -->
 <div id="loginPage" style="display:flex;justify-content:center;align-items:center;height:100vh;background:#3498db;">
   <div style="background:white;padding:40px 30px;border-radius:12px;box-shadow:0 5px 20px rgba(0,0,0,0.2);width:320px;text-align:center;">
-    
     <h2 style="margin-bottom:20px;color:#2c3e50;">生鮮 POS 登入</h2>
-    
-    <input id="storeInput" placeholder="門市編號"
-      style="width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:1em;">
-
-    <input id="passwordInput" placeholder="密碼" type="password"
-      style="width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:1em;">
-
-    <button id="loginBtn" onclick="login()"
-      style="width:100%;padding:12px;margin-top:15px;border:none;border-radius:6px;background:#27ae60;color:white;font-size:1em;cursor:pointer;transition:0.2s;">
-      登入
-    </button>
-
+    <input id="storeInput" placeholder="門市編號" style="width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <input id="passwordInput" placeholder="密碼" type="password" style="width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <button id="loginBtn" onclick="login()" style="width:100%;padding:12px;margin-top:15px;border:none;border-radius:6px;background:#27ae60;color:white;font-size:1em;cursor:pointer;transition:0.2s;">登入</button>
     <p id="loginMsg" style="color:red;margin-top:10px;font-size:0.9em;"></p>
   </div>
 </div>
@@ -92,10 +73,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 <div id="posApp" style="display:none;">
   <div id="posCategories">
     <div id="storeInfo" style="font-size:14px;font-weight:bold;margin-bottom:10px;"></div>
-    <button id="logoutBtn" style="margin-bottom:10px;font-size:13px; background-color:#FFE066; border:none; padding:5px 10px; cursor:pointer;">
-        登出
-    </button>
-
+    <button id="logoutBtn" style="margin-bottom:10px;font-size:13px; background-color:#FFE066; border:none; padding:5px 10px; cursor:pointer;">登出</button>
     <input type="text" id="searchBox" placeholder="搜尋商品">
     <h3>分類</h3>
   </div>
@@ -105,11 +83,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   <div id="posCartContainer">
     <h3 style="font-size:85%;">訂單明細</h3>
     <div class="cartHeader">
-      <span>商品</span>
-      <span>數量</span>
-      <span>單價</span>
-      <span>小計</span>
-      <span>刪除</span>
+      <span>商品</span><span>數量</span><span>單價</span><span>小計</span><span>刪除</span>
     </div>
     <div id="posCart"></div>
     <div id="discountContainer">
@@ -140,18 +114,10 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     <h4 id="modalProductName">輸入</h4>
     <input id="modalInput" readonly>
     <div id="numpad">
-      <button onclick="np('7')">7</button>
-      <button onclick="np('8')">8</button>
-      <button onclick="np('9')">9</button>
-      <button onclick="np('4')">4</button>
-      <button onclick="np('5')">5</button>
-      <button onclick="np('6')">6</button>
-      <button onclick="np('1')">1</button>
-      <button onclick="np('2')">2</button>
-      <button onclick="np('3')">3</button>
-      <button onclick="np('0')">0</button>
-      <button onclick="np('.')">.</button>
-      <button onclick="backspace()">←</button>
+      <button onclick="np('7')">7</button><button onclick="np('8')">8</button><button onclick="np('9')">9</button>
+      <button onclick="np('4')">4</button><button onclick="np('5')">5</button><button onclick="np('6')">6</button>
+      <button onclick="np('1')">1</button><button onclick="np('2')">2</button><button onclick="np('3')">3</button>
+      <button onclick="np('0')">0</button><button onclick="np('.')">.</button><button onclick="backspace()">←</button>
     </div>
     <div id="promoButtons"></div>
     <div class="modalActions">
@@ -161,31 +127,29 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   </div>
 </div>
 
-<!-- 結帳 Modal -->
-<div id="checkoutModal">
-  <div class="checkoutContent" id="checkoutContent"></div>
-</div>
+<!-- 列印收據區 -->
+<div id="printArea"></div>
 
 <script>
 // ===== 變數與初始 =====
-const API_URL = "https://script.google.com/macros/s/AKfycbyJOJ2IM5I7i5H-oSqrZoa_0Ytda5u0KXyzFaiQ6ch22netc3s1J28h9HZANFGuUQn-/exec";
-let products=[], categories=[], posCart=[];
+const API_URL = "https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec";
+let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
-let POS_STORE = ""; 
-let currentStore=null, currentIP="";
+let POS_STORE = "";
 
-// ===== IP 與登入 =====
+// ===== 取得 IP (含快取) =====
 async function getIP() {
-    const cache = sessionStorage.getItem("myIP");
-    if (cache) return cache;
-    try {
-        const res = await fetch("https://api.ipify.org?format=json");
-        const data = await res.json();
-        sessionStorage.setItem("myIP", data.ip);
-        return data.ip;
-    } catch { return ""; }
+  const cache = sessionStorage.getItem("myIP");
+  if (cache) return cache;
+  try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      const data = await res.json();
+      sessionStorage.setItem("myIP", data.ip);
+      return data.ip;
+  } catch { return ""; }
 }
 
+// ===== 登入 =====
 async function login(){
   const store = document.getElementById("storeInput").value.trim();
   const pwd = document.getElementById("passwordInput").value.trim();
@@ -194,24 +158,42 @@ async function login(){
     return;
   }
 
-  currentIP = await getIP();
+  const userIP = await getIP();
 
-  fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${currentIP}`)
+  fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`)
     .then(res=>res.json())
     .then(res=>{
       if(res.status==="success"){
         document.getElementById("loginPage").style.display="none";
         document.getElementById("posApp").style.display="flex";
         POS_STORE = res.storeCode;
-        currentStore={name:res.storeName, code:res.storeCode};
+
+        // ===== 設定全域門市資訊 =====
+        window.currentStore = {name: res.storeName, code: res.storeCode};
+        window.currentIP = userIP;
+
         updateStoreInfo();
+        alert("歡迎：" + res.storeName);
         fetchProducts();
       } else {
         document.getElementById("loginMsg").innerText=res.message;
       }
     })
-    .catch(err=>{ document.getElementById("loginMsg").innerText="登入失敗，請稍後再試"; console.error(err); });
+    .catch(err=>{
+      document.getElementById("loginMsg").innerText="登入失敗，請稍後再試";
+      console.error(err);
+    });
 }
+
+// ===== 更新門市資訊與當前時間 =====
+function updateStoreInfo(){
+  if(!window.currentStore) return;
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString("zh-TW", {hour12:false});
+  document.getElementById("storeInfo").innerHTML = 
+      `${window.currentStore.name}（${window.currentStore.code}）<br>${timeStr}`;
+}
+setInterval(updateStoreInfo, 1000);
 
 // ===== 取得商品、分類 =====
 async function fetchProducts(){
@@ -311,32 +293,68 @@ function openEditModal(index,field){
 }
 
 function openPromoModal(item){
-  editIndex=posCart.indexOf(item); editingField='promo'; modalType='promo';
-  const modal=document.getElementById("editModal");
-  modal.style.display="flex"; modal.classList.add("promoMode");
-  document.getElementById("promoButtons").innerHTML="";
-  const promos=["第二件減10","買二送一","買一送一","第二件6折"];
-  promos.forEach(p=>{
-    const btn=document.createElement("button");
-    btn.innerText=p;
-    btn.onclick=()=>{ item.discount={type:p}; closeModal(); renderCart(); };
-    document.getElementById("promoButtons").appendChild(btn);
+  modalType='promo'; editIndex=null;
+  document.getElementById("numpad").style.display='none';
+  const promoDiv=document.getElementById("promoButtons");
+  promoDiv.style.display='grid';
+  promoDiv.innerHTML='';
+  const promoList=[
+    {name:'95折',rate:0.95},{name:'9折',rate:0.9},{name:'85折',rate:0.85},{name:'8折',rate:0.8},
+    {name:'7折',rate:0.7},{name:'6折',rate:0.6},{name:'買一送一',type:'買一送一'},{name:'買二送一',type:'買二送一'},
+    {name:'第二件減10',type:'第二件減10'},{name:'第二件6折',type:'第二件6折'}
+  ];
+  promoList.forEach(p=>{
+    const btn=document.createElement('button');
+    btn.innerText=p.name;
+    btn.onclick=()=>{
+      let idx=posCart.findIndex(x=>x.name===item.name);
+      if(idx===-1) addPOSItem(item);
+      idx=posCart.findIndex(x=>x.name===item.name);
+      if(p.type) posCart[idx].discount={type:p.type};
+      else posCart[idx].discount={rate:p.rate,type:'折扣'};
+      closeModal(); renderCart();
+    };
+    promoDiv.appendChild(btn);
   });
+  document.getElementById("modalProductName").innerText=item.name;
+  document.getElementById("editModal").style.display='flex';
+  document.getElementById("editModal").classList.add("promoMode");
+
 }
 
-function closeModal(){ document.getElementById("editModal").style.display="none"; modalType=null; }
+// ===== 數字鍵盤 =====
+function np(v){
+  let input=document.getElementById("modalInput");
+  input.value=(input.value==='0'&&v!=='.')?v:input.value+v;
+}
+function backspace(){
+  let input=document.getElementById("modalInput");
+  input.value=input.value.slice(0,-1);
+  if(input.value==='') input.value='0';
+}
 
-function np(v){ document.getElementById("modalInput").value+=v; }
-function backspace(){ document.getElementById("modalInput").value=document.getElementById("modalInput").value.slice(0,-1); }
-
+// ===== 確定 =====
 function confirmEdit(){
   let val=document.getElementById("modalInput").value;
-  if(editingField==='quantity'){ posCart[editIndex].quantity=parseFloat(val)||0; }
-  if(editingField==='price'){ posCart[editIndex].price=parseFloat(val)||0; }
-  if(editingField==='discount'){ document.getElementById("discount").value=parseFloat(val)||0; }
-  if(editingField==='cash'){ document.getElementById("cashInput").value=parseFloat(val)||0; updateChange(); }
+  if(editIndex!==null && editingField==='quantity' && posCart[editIndex].unit==='斤'){
+    const parts=val.split('.');
+    let j=Number(parts[0])||0;
+    let l=Number(parts[1])||0;
+    let q=Number(parts[2])||0;
+    let totalQty=j + l/16 + q/160;
+    posCart[editIndex].quantity=totalQty;
+  } else {
+    let v=Number(val);
+    if(modalType==='discount') document.getElementById("discount").value=v;
+    else if(modalType==='cash') document.getElementById("cashInput").value=v;
+    else if(editIndex!==null) posCart[editIndex][editingField]=v;
+  }
   closeModal(); renderCart();
 }
+
+function closeModal(){document.getElementById("editModal").style.display='none'; editIndex=null; editingField=null; modalType=null;document.getElementById("editModal").classList.remove("promoMode");
+}
+
 
 function setTax(t){ currentTax=t; document.querySelectorAll("#taxContainer button").forEach(b=>b.classList.remove("active")); if(t==="應稅") document.getElementById("taxIncluded").classList.add("active"); else document.getElementById("taxExempt").classList.add("active"); renderCart(); }
 
