@@ -47,8 +47,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   #editModal input{font-size:1.8em;}
 }
 #editModal.promoMode #modalInput {display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important;}  
-
-/* 收據列印專用 */
 #printArea{display:none;width:58mm;font-size:12px;line-height:1.2em;}
 #printArea h4{text-align:center;margin:2px 0;}
 #printArea table{width:100%;border-collapse:collapse;}
@@ -64,32 +62,21 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     <h2 style="margin-bottom:20px;color:#2c3e50;">生鮮 POS 登入</h2>
     <input id="storeInput" placeholder="門市編號" style="width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:1em;">
     <input id="passwordInput" placeholder="密碼" type="password" style="width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:1em;">
-    <button id="loginBtn" onclick="login()" style="width:100%;padding:12px;margin-top:15px;border:none;border-radius:6px;background:#27ae60;color:white;font-size:1em;cursor:pointer;transition:0.2s;">登入</button>
+    <button id="loginBtn" style="width:100%;padding:12px;margin-top:15px;border:none;border-radius:6px;background:#27ae60;color:white;font-size:1em;cursor:pointer;transition:0.2s;">登入</button>
     <p id="loginMsg" style="color:red;margin-top:10px;font-size:0.9em;"></p>
   </div>
 </div>
 
-
 <!-- POS 主頁 -->
 <div id="posApp" style="display:none;">
   <div id="posCategories">
-    <!-- 顯示門市名稱和編號 -->
     <div id="storeInfo" style="font-size:14px; font-weight:bold; margin-bottom:10px;"></div>
-    <!-- 顯示登入時間 -->
     <div id="loginTime" style="font-size:12px; color: white; margin-bottom: 10px;"></div>
-    
-    <!-- 登出按鈕 -->
-    <button id="logoutBtn" style="margin-bottom:10px; font-size:13px; background-color:#FFE066; border:none; padding:5px 10px; cursor:pointer;">
-      登出
-    </button>
-    
-    <!-- 搜尋商品欄位 -->
+    <button id="logoutBtn" style="margin-bottom:10px; font-size:13px; background-color:#FFE066; border:none; padding:5px 10px; cursor:pointer;">登出</button>
     <input type="text" id="searchBox" placeholder="搜尋商品">
     <h3>分類</h3>
   </div>
-
   <div id="posProducts"></div>
-
   <div id="posCartContainer">
     <h3 style="font-size:85%;">訂單明細</h3>
     <div class="cartHeader">
@@ -118,98 +105,74 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   </div>
 </div>
 
-<!-- 編輯 Modal -->
-<div id="editModal">
-  <div class="modalContent">
-    <h4 id="modalProductName">輸入</h4>
-    <input id="modalInput" readonly>
-    <div id="numpad">
-      <button onclick="np('7')">7</button><button onclick="np('8')">8</button><button onclick="np('9')">9</button>
-      <button onclick="np('4')">4</button><button onclick="np('5')">5</button><button onclick="np('6')">6</button>
-      <button onclick="np('1')">1</button><button onclick="np('2')">2</button><button onclick="np('3')">3</button>
-      <button onclick="np('0')">0</button><button onclick="np('.')">.</button><button onclick="backspace()">←</button>
-    </div>
-    <div id="promoButtons"></div>
-    <div class="modalActions">
-      <button class="cancel" onclick="closeModal()">取消</button>
-      <button class="confirm" onclick="confirmEdit()">確定</button>
-    </div>
-  </div>
-</div>
+<script>
+const API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+let POS_STORE = "";
+let posCart = [], currentTax = "應稅";
 
-<!-- 列印收據區 -->
-<div id="printArea"></div>
-
-<script>  
-const API_URL = "https://script.google.com/macros/s/AKfycbyJOJ2IM5I7i5H-oSqrZoa_0Ytda5u0KXyzFaiQ6ch22netc3s1J28h9HZANFGuUQn-/exec";
-let products = [], categories = [], posCart = [];
-let currentTax = "應稅", editIndex = null, editingField = null, modalType = null;
-let POS_STORE = ""; // 登入後的門市編號
-
-// ====== 更快的 IP 取得（含 sessionStorage 快取）======
-async function getIP() {
-    const cache = sessionStorage.getItem("myIP");
-    if (cache) return cache;
-
-    try {
-        const res = await fetch("https://api.ipify.org?format=json");
-        const data = await res.json();
-        sessionStorage.setItem("myIP", data.ip);
-        return data.ip;
-    } catch {
-        return "";
-    }
-}
-
-// ===== 更新登入時間 =====
 function updateLoginTime() {
-    const now = new Date();
-    const timeStr = now.toLocaleString("zh-TW", { hour12: false });
-    // 更新时间部分，不影响门市信息
-    document.getElementById("loginTime").innerText = `登入時間：${timeStr}`;
+  const now = new Date();
+  document.getElementById("loginTime").innerText = `登入時間：${now.toLocaleString("zh-TW",{hour12:false})}`;
 }
 
-// ===== 登入 =====
-const loginBtn = document.getElementById("loginBtn");
-    loginBtn.innerText = "登入中..."; // 點擊後立即顯示
-    loginBtn.disabled = true; // 防止重複點擊
+async function login() {
+  const loginBtn = document.getElementById("loginBtn");
+  loginBtn.innerText = "登入中...";
+  loginBtn.disabled = true;
 
-    const store = document.getElementById("storeInput").value;
-    const pwd = document.getElementById("passwordInput").value;
-    const userIP = "127.0.0.1"; 
+  const store = document.getElementById("storeInput").value;
+  const pwd = document.getElementById("passwordInput").value;
 
-    fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`)
-      .then(res => res.json())
-      .then(res => {
-        if (res.status === "success") {
-          document.getElementById("loginPage").style.display = "none";
-          document.getElementById("posApp").style.display = "flex";
-          POS_STORE = res.storeCode;
-
-          document.getElementById("storeInfo").innerHTML = `${res.storeName}（${res.storeCode}）`;
-
-          const now = new Date();
-          const timeStr = now.toLocaleString("zh-TW", { hour12: false });
-          document.getElementById("loginTime").innerText = `登入時間：${timeStr}`;
-          setInterval(updateLoginTime, 1000);
-
-          alert("歡迎：" + res.storeName);
-          fetchProducts();
-        } else {
-          document.getElementById("loginMsg").innerText = res.message;
-          loginBtn.innerText = "登入"; // 恢復按鈕文字
-          loginBtn.disabled = false;
-        }
-      })
-      .catch(err => {
-        document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
-        console.error(err);
-        loginBtn.innerText = "登入"; // 恢復按鈕文字
-        loginBtn.disabled = false;
-      });
+  try {
+    const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}`);
+    const data = await res.json();
+    if(data.status==="success"){
+      POS_STORE = data.storeCode;
+      document.getElementById("loginPage").style.display="none";
+      document.getElementById("posApp").style.display="flex";
+      document.getElementById("storeInfo").innerText = `${data.storeName}（${data.storeCode}）`;
+      updateLoginTime();
+      setInterval(updateLoginTime,1000);
+      fetchProducts();
+    } else {
+      document.getElementById("loginMsg").innerText=data.message;
+      loginBtn.innerText="登入";
+      loginBtn.disabled=false;
+    }
+  } catch(err){
+    console.error(err);
+    document.getElementById("loginMsg").innerText="登入失敗，請稍後再試";
+    loginBtn.innerText="登入";
+    loginBtn.disabled=false;
+  }
 }
 
+// 登出
+async function logout() {
+  const now = new Date();
+  const logoutTime = now.toLocaleString("zh-TW",{hour12:false});
 
+  try{
+    await fetch(`${API_URL}?action=logout&store=${POS_STORE}&time=${encodeURIComponent(logoutTime)}`);
+  } catch(err){ console.error(err); }
+
+  document.getElementById("posApp").style.display="none";
+  document.getElementById("loginPage").style.display="flex";
+  document.getElementById("loginBtn").innerText="登入";
+  document.getElementById("loginBtn").disabled=false;
+  document.getElementById("loginMsg").innerText="";
+}
+
+// 綁定按鈕事件
+document.getElementById("loginBtn").addEventListener("click",login);
+document.getElementById("logoutBtn").addEventListener("click",logout);
+
+function setTax(t){
+  currentTax = t;
+  document.getElementById("taxIncluded").classList.toggle('active',t==="應稅");
+  document.getElementById("taxExempt").classList.toggle('active',t==="免稅");
+  renderCart();
+}
 
 // ===== 取得商品 =====
 async function fetchProducts() {
