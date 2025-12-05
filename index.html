@@ -83,31 +83,29 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 
 <div id="posApp" style="display:none;">
-   <!-- POS 左側欄 -->
-<div id="posCategories" style="width:250px; padding:10px; border-right:1px solid #ccc; float:left; display:flex; flex-direction:column; height:100vh; box-sizing:border-box;">
-
-  <!-- 上方固定區: 店鋪資訊 + 登出 + 搜尋 -->
-  <div style="margin-bottom:10px;">
-    <div id="storeInfo" style="font-size:14px; font-weight:bold; margin-bottom:10px;"></div>
-    <button id="logoutBtn" style="
-        margin-bottom:10px;
-        font-size:13px;
-        background-color:#FFE066; /* 鵝黃色 */
-        border:none;
-        padding:5px 10px;
-        cursor:pointer;
-    ">
+      <div id="posCategories">
+    <!-- 店鋪資訊 + 登出按鈕 -->
+    <div id="storeInfo" style="font-size:14px;font-weight:bold;margin-bottom:10px;"></div>
+    <button id="logoutBtn" style="margin-bottom:10px;font-size:13px; background-color:#FFE066; border:none; padding:5px 10px; cursor:pointer;">
         登出
     </button>
-    <input type="text" id="searchBox" placeholder="搜尋商品" style="width:100%; padding:5px; margin-bottom:10px;">
-  </div>
 
-  <!-- 下方分類滾動區 -->
-  <div style="flex:1; overflow-y:auto;">
+    <input type="text" id="searchBox" placeholder="搜尋商品">
     <h3>分類</h3>
-    <ul id="categoryList" style="list-style:none; padding-left:0; margin:0;"></ul>
-  </div>
 </div>
+
+
+ 
+  <div id="posProducts"></div>
+  <div id="posCartContainer">
+    <h3 style="font-size:85%;">訂單明細</h3>
+    <div class="cartHeader">
+      <span>商品</span>
+      <span>數量</span>
+      <span>單價</span>
+      <span>小計</span>
+      <span>刪除</span>
+    </div>
     <div id="posCart"></div>
     <div id="discountContainer">
       <input type="text" id="discount" placeholder="折扣金額" readonly>
@@ -162,8 +160,6 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 const API_URL = "https://script.google.com/macros/s/AKfycbyJOJ2IM5I7i5H-oSqrZoa_0Ytda5u0KXyzFaiQ6ch22netc3s1J28h9HZANFGuUQn-/exec";
 let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
-let currentStore = null; // 登入後存門市資訊
-let categories = [];     // 商品分類陣列
 let POS_STORE = ""; // 登入後的門市編號
 
 // ====== 更快的 IP 取得（含 sessionStorage 快取）======
@@ -230,33 +226,10 @@ async function fetchProducts(){
 }
 //fetchProducts();
 
-// ===== 渲染分類 =====
-function renderCategories(){
-  const box=document.getElementById("posCategories");
-  box.querySelectorAll("button").forEach(b=>b.remove());
-  categories.forEach(cat=>{
-    const btn=document.createElement("button");
-    btn.textContent=cat;
-    btn.onclick=()=>{
-      document.querySelectorAll("#posCategories button").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      renderProducts(cat);
-    };
-    box.appendChild(btn);
-  });
-  if(box.querySelector("button")) box.querySelector("button").classList.add("active");
-}
-
-// ===== 搜尋商品 =====
-document.getElementById("searchBox").oninput=function(){
-  renderProducts(null,this.value.trim().toLowerCase());
-};
-
-// ===== 渲染商品 =====
-function renderCategories() {
-    const box = document.getElementById("categoryList");
-    box.innerHTML = ""; // 清空舊分類
-
+  / 渲染分類
+function renderCategories(categories) {
+    const list = document.getElementById("categoryList");
+    list.innerHTML = ""; // 先清空
     categories.forEach(cat => {
         const li = document.createElement("li");
         const btn = document.createElement("button");
@@ -266,25 +239,42 @@ function renderCategories() {
         btn.onclick = () => {
             document.querySelectorAll("#categoryList button").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
-            renderProducts(cat); // 依分類渲染商品
+            renderProducts(cat); // 你的渲染商品函式
         };
         li.appendChild(btn);
-        box.appendChild(li);
+        list.appendChild(li);
     });
-
-    // 預設第一個分類為 active
-    const firstBtn = box.querySelector("button");
+    // 預設選中第一個
+    const firstBtn = list.querySelector("button");
     if (firstBtn) firstBtn.classList.add("active");
 }
 
-// --------------------
-// 更新店鋪資訊
-// --------------------
-function setStoreInfo(store) {
-    currentStore = store;
-    const info = document.getElementById("storeInfo");
-    const now = new Date();
-    info.textContent = `${store.name} (${store.code}) - ${now.toLocaleTimeString()}`;
+// 搜尋欄監聽
+document.getElementById("searchBox").addEventListener("input", (e) => {
+    const keyword = e.target.value.toLowerCase();
+    filterProducts(keyword); // 你的商品篩選函式
+});
+
+// ===== 搜尋商品 =====
+document.getElementById("searchBox").oninput=function(){
+  renderProducts(null,this.value.trim().toLowerCase());
+};
+
+// ===== 渲染商品 =====
+function renderProducts(category=null,search=""){
+  const box=document.getElementById("posProducts");
+  box.innerHTML="";
+  products.filter(p=>{
+    if(category && p["類別"]!==category) return false;
+    if(search && !p["商品名稱"].toLowerCase().includes(search)) return false;
+    return true;
+  }).forEach(p=>{
+    const card=document.createElement("div");
+    card.className="product-card";
+    card.innerHTML=`<img src="${p["商品照片"]}"><h4>${p["商品名稱"]}</h4><p>${p["售價"]} 元 / ${p["單位"]}</p>`;
+    card.onclick=()=>addPOSItem(p);
+    box.appendChild(card);
+  });
 }
 
 // ===== 加入購物車 =====
@@ -468,22 +458,33 @@ function updateStoreInfo(){
 // 每秒更新
 setInterval(updateStoreInfo, 1000);
 
-// 登出事件
-document.getElementById("logoutBtn").addEventListener("click", function(){
-    if(!window.currentStore) return;
+let currentStore = null; // 登入成功後會設定
 
-    fetch(`https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec?action=logout&store=${window.currentStore.code}&storeName=${window.currentStore.name}&ip=${window.currentIP}`)
-    .then(res=>res.json())
-    .then(res=>{
-        if(res.status==="success"){
-            alert("已登出");
-            window.location.reload();
-        } else {
-            alert("登出失敗: "+res.message);
-        }
-    });
-});
+// 動態更新店鋪資訊時鐘
+function startStoreClock() {
+    if (!currentStore) return;
+    const info = document.getElementById("storeInfo");
 
+    function updateTime() {
+        const now = new Date();
+        info.textContent = `${currentStore.name} (${currentStore.code}) - ${now.toLocaleTimeString()}`;
+    }
+
+    updateTime(); // 先立即更新一次
+    setInterval(updateTime, 1000); // 每秒更新
+}
+
+// 登出按鈕
+document.getElementById("logoutBtn").addEventListener("click", () => {
+    if (!currentStore) return;
+    // 記錄登出時間到後端
+    fetch(`/doLogout?store=${currentStore.code}&ip=${currentStore.ip}`)
+        .finally(() => {
+            // 清空當前店鋪資訊
+            currentStore = null;
+            // 回到登入頁
+            location.href = "/login.html";
+        });
 
 
 </script>
