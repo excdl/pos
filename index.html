@@ -226,34 +226,22 @@ async function fetchProducts(){
 }
 //fetchProducts();
 
-  / 渲染分類
-function renderCategories(categories) {
-    const list = document.getElementById("categoryList");
-    list.innerHTML = ""; // 先清空
-    categories.forEach(cat => {
-        const li = document.createElement("li");
-        const btn = document.createElement("button");
-        btn.textContent = cat;
-        btn.style.width = "100%";
-        btn.style.marginBottom = "5px";
-        btn.onclick = () => {
-            document.querySelectorAll("#categoryList button").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            renderProducts(cat); // 你的渲染商品函式
-        };
-        li.appendChild(btn);
-        list.appendChild(li);
-    });
-    // 預設選中第一個
-    const firstBtn = list.querySelector("button");
-    if (firstBtn) firstBtn.classList.add("active");
+// ===== 渲染分類 =====
+function renderCategories(){
+  const box=document.getElementById("posCategories");
+  box.querySelectorAll("button").forEach(b=>b.remove());
+  categories.forEach(cat=>{
+    const btn=document.createElement("button");
+    btn.textContent=cat;
+    btn.onclick=()=>{
+      document.querySelectorAll("#posCategories button").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      renderProducts(cat);
+    };
+    box.appendChild(btn);
+  });
+  if(box.querySelector("button")) box.querySelector("button").classList.add("active");
 }
-
-// 搜尋欄監聽
-document.getElementById("searchBox").addEventListener("input", (e) => {
-    const keyword = e.target.value.toLowerCase();
-    filterProducts(keyword); // 你的商品篩選函式
-});
 
 // ===== 搜尋商品 =====
 document.getElementById("searchBox").oninput=function(){
@@ -458,33 +446,22 @@ function updateStoreInfo(){
 // 每秒更新
 setInterval(updateStoreInfo, 1000);
 
-let currentStore = null; // 登入成功後會設定
+// 登出事件
+document.getElementById("logoutBtn").addEventListener("click", function(){
+    if(!window.currentStore) return;
 
-// 動態更新店鋪資訊時鐘
-function startStoreClock() {
-    if (!currentStore) return;
-    const info = document.getElementById("storeInfo");
+    fetch(`https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec?action=logout&store=${window.currentStore.code}&storeName=${window.currentStore.name}&ip=${window.currentIP}`)
+    .then(res=>res.json())
+    .then(res=>{
+        if(res.status==="success"){
+            alert("已登出");
+            window.location.reload();
+        } else {
+            alert("登出失敗: "+res.message);
+        }
+    });
+});
 
-    function updateTime() {
-        const now = new Date();
-        info.textContent = `${currentStore.name} (${currentStore.code}) - ${now.toLocaleTimeString()}`;
-    }
-
-    updateTime(); // 先立即更新一次
-    setInterval(updateTime, 1000); // 每秒更新
-}
-
-// 登出按鈕
-document.getElementById("logoutBtn").addEventListener("click", () => {
-    if (!currentStore) return;
-    // 記錄登出時間到後端
-    fetch(`/doLogout?store=${currentStore.code}&ip=${currentStore.ip}`)
-        .finally(() => {
-            // 清空當前店鋪資訊
-            currentStore = null;
-            // 回到登入頁
-            location.href = "/login.html";
-        });
 
 
 </script>
@@ -497,6 +474,7 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 </div>
 </body>
 </html>
+
 
 
 
