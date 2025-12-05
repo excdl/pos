@@ -476,19 +476,17 @@ function updateChange() {
 // ===== 小票列印 =====
 document.getElementById("posCheckout").onclick = async function () {
 
-    await sendCheckoutToSheet();  // ★ 新增：寫入 Google Sheet
+    // Step 1：寫入 Google Sheet
+    await sendCheckoutToSheet();
 
-    // 接著執行小票列印
-    //（原本你的列印程式碼保持不動）
-};
-
-    // ===== 格式化小票內容 =====
+    // Step 2：格式化小票內容
     function getMaxLength() {
         let maxNameLen = 0, maxQtyLen = 0, maxPriceLen = 0, maxSubtotalLen = 0;
         posCart.forEach(item => {
             maxNameLen = Math.max(maxNameLen, item.name.length);
             maxQtyLen = Math.max(maxQtyLen, item.quantity.toFixed(2).length);
             maxPriceLen = Math.max(maxPriceLen, item.price.toFixed(0).length);
+
             let sub = item.quantity * item.price;
             if (item.discount) {
                 switch (item.discount.type) {
@@ -569,19 +567,21 @@ document.getElementById("posCheckout").onclick = async function () {
         return content;
     }
 
+    // Step 3：列印
     const receiptContent = formatReceipt();
     const printWindow = window.open('', '', 'width=300,height=600');
     printWindow.document.write('<pre style="font-family:monospace;font-size:12px;line-height:1.2;">' + receiptContent + '</pre>');
     printWindow.document.write('<script>window.onload=function(){window.print();};<\/script>');
     printWindow.document.close();
 
-    // 清空購物車
+    // Step 4：清空購物車
     posCart = [];
     document.getElementById("discount").value = "0";
     document.getElementById("cashInput").value = "";
     document.getElementById("changeOut").textContent = "0";
     renderCart();
 };
+
 </script>
 
 </body>
