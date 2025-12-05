@@ -135,21 +135,23 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 const API_URL = "https://script.google.com/macros/s/AKfycbyJOJ2IM5I7i5H-oSqrZoa_0Ytda5u0KXyzFaiQ6ch22netc3s1J28h9HZANFGuUQn-/exec";
 let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
-let POS_STORE = "";
+let POS_STORE = ""; // 登入後的門市編號
 
-// ===== 取得 IP (含快取) =====
+// ====== 更快的 IP 取得（含 sessionStorage 快取）======
 async function getIP() {
-  const cache = sessionStorage.getItem("myIP");
-  if (cache) return cache;
-  try {
-      const res = await fetch("https://api.ipify.org?format=json");
-      const data = await res.json();
-      sessionStorage.setItem("myIP", data.ip);
-      return data.ip;
-  } catch { return ""; }
-}
+    const cache = sessionStorage.getItem("myIP");
+    if (cache) return cache;
 
-// ===== 登入 =====
+    try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        sessionStorage.setItem("myIP", data.ip);
+        return data.ip;
+    } catch {
+        return "";
+    }
+}
+  
 async function login(){
   const store = document.getElementById("storeInput").value.trim();
   const pwd = document.getElementById("passwordInput").value.trim();
@@ -158,6 +160,7 @@ async function login(){
     return;
   }
 
+  // ★ 取得 IP
   const userIP = await getIP();
 
   fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`)
@@ -168,11 +171,12 @@ async function login(){
         document.getElementById("posApp").style.display="flex";
         POS_STORE = res.storeCode;
 
-        // ===== 設定全域門市資訊 =====
-        window.currentStore = {name: res.storeName, code: res.storeCode};
-        window.currentIP = userIP;
+        // ★ 顯示門市名稱、編號、登入時間
+        const now = new Date();
+        const timeStr = now.toLocaleString("zh-TW", { hour12: false });
+        document.getElementById("storeInfo").innerHTML = 
+            `${res.storeName}（${res.storeCode}）<br>${timeStr}`;
 
-        updateStoreInfo();
         alert("歡迎：" + res.storeName);
         fetchProducts();
       } else {
@@ -185,17 +189,9 @@ async function login(){
     });
 }
 
-// ===== 更新門市資訊與當前時間 =====
-function updateStoreInfo(){
-  if(!window.currentStore) return;
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString("zh-TW", {hour12:false});
-  document.getElementById("storeInfo").innerHTML = 
-      `${window.currentStore.name}（${window.currentStore.code}）<br>${timeStr}`;
-}
-setInterval(updateStoreInfo, 1000);
 
-// ===== 取得商品、分類 =====
+
+// ===== 取得商品 =====
 async function fetchProducts(){
   const res = await fetch(API_URL+"?action=products");
   products=await res.json();
@@ -203,23 +199,31 @@ async function fetchProducts(){
   renderCategories();
   if(categories.length>0) renderProducts(categories[0]);
 }
+//fetchProducts();
 
+// ===== 渲染分類 =====
 function renderCategories(){
   const box=document.getElementById("posCategories");
   box.querySelectorAll("button").forEach(b=>b.remove());
   categories.forEach(cat=>{
     const btn=document.createElement("button");
     btn.textContent=cat;
-    btn.onclick=()=>{ document.querySelectorAll("#posCategories button").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); renderProducts(cat); };
+    btn.onclick=()=>{
+      document.querySelectorAll("#posCategories button").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      renderProducts(cat);
+    };
     box.appendChild(btn);
   });
   if(box.querySelector("button")) box.querySelector("button").classList.add("active");
 }
 
+// ===== 搜尋商品 =====
 document.getElementById("searchBox").oninput=function(){
   renderProducts(null,this.value.trim().toLowerCase());
 };
 
+// ===== 渲染商品 =====
 function renderProducts(category=null,search=""){
   const box=document.getElementById("posProducts");
   box.innerHTML="";
@@ -236,14 +240,19 @@ function renderProducts(category=null,search=""){
   });
 }
 
+// ===== 加入購物車 =====
 function addPOSItem(p){
-  let qtyAdd=1; let pricePerUnit=Number(p["售價"]); let unit=p["單位"];
-  if(unit==="半斤"){ qtyAdd=0.5; pricePerUnit*=2; unit="斤"; }
+  let qtyAdd=1;
+  let pricePerUnit=Number(p["售價"]);
+  let unit=p["單位"];
+  if(p["單位"]==="半斤"){qtyAdd=0.5; pricePerUnit*=2; unit="斤";}
   let exist=posCart.find(x=>x.name===p["商品名稱"]);
-  if(exist){ exist.quantity+=qtyAdd; } else{ posCart.push({name:p["商品名稱"],quantity:qtyAdd,price:pricePerUnit,unit:unit,discount:null}); }
+  if(exist){exist.quantity+=qtyAdd;}
+  else{posCart.push({name:p["商品名稱"],quantity:qtyAdd,price:pricePerUnit,unit:unit,discount:null});}
   renderCart();
 }
 
+// ===== 渲染購物車 =====
 function renderCart(){
   const box=document.getElementById("posCart"); box.innerHTML="";
   let total=0;
@@ -276,22 +285,26 @@ function renderCart(){
   updateChange();
 }
 
+// ===== 刪除商品 =====
 function removeItem(i){ posCart.splice(i,1); renderCart(); }
 
+// ===== 編輯數量/折扣/收現 =====
 document.getElementById("discount").onclick=()=>openEditModal(null,'discount');
 document.getElementById("cashInput").onclick=()=>openEditModal(null,'cash');
 
 function openEditModal(index,field){
-  editIndex=index; editingField=field; modalType=null;
-  const modal=document.getElementById("editModal");
-  modal.style.display="flex"; modal.classList.remove("promoMode");
-  const input=document.getElementById("modalInput");
-  if(field==='quantity'){ document.getElementById("modalProductName").innerText="修改數量"; input.value=posCart[index].quantity; }
-  if(field==='price'){ document.getElementById("modalProductName").innerText="修改單價"; input.value=posCart[index].price; }
-  if(field==='discount'){ document.getElementById("modalProductName").innerText="折扣"; input.value=document.getElementById("discount").value; }
-  if(field==='cash'){ document.getElementById("modalProductName").innerText="收現金額"; input.value=document.getElementById("cashInput").value; }
+  editIndex=index; editingField=field; modalType=field;
+  document.getElementById("promoButtons").style.display='none';
+  document.getElementById("numpad").style.display='grid';
+  let value=(field==='discount'?document.getElementById("discount").value
+    :field==='cash'?document.getElementById("cashInput").value
+    :posCart[index][field]);
+  document.getElementById("modalInput").value=value;
+  document.getElementById("modalProductName").innerText=field==='cash'?'收現金': field==='discount'?'折扣':'輸入';
+  document.getElementById("editModal").style.display="flex";
 }
 
+// ===== 優惠按鈕 =====
 function openPromoModal(item){
   modalType='promo'; editIndex=null;
   document.getElementById("numpad").style.display='none';
@@ -354,21 +367,12 @@ function confirmEdit(){
 
 function closeModal(){document.getElementById("editModal").style.display='none'; editIndex=null; editingField=null; modalType=null;document.getElementById("editModal").classList.remove("promoMode");
 }
-
-
-function setTax(t){ currentTax=t; document.querySelectorAll("#taxContainer button").forEach(b=>b.classList.remove("active")); if(t==="應稅") document.getElementById("taxIncluded").classList.add("active"); else document.getElementById("taxExempt").classList.add("active"); renderCart(); }
-
-document.getElementById("posPayment").onchange=()=>{ updateChange(); };
-
-function updateChange(){
-  let total=Number(document.getElementById("posTotal").innerText)||0;
+function setTax(t){ currentTax=t; document.getElementById("taxIncluded").classList.toggle('active',t==="應稅"); document.getElementById("taxExempt").classList.toggle('active',t==="免稅"); renderCart(); }
+function updateChange(){ 
   let cash=Number(document.getElementById("cashInput").value)||0;
-  let change=document.getElementById("posPayment").value==='現金'?cash-total:0;
-  document.getElementById("changeOut").innerText=change.toFixed(0);
+  let total=Number(document.getElementById("posTotal").innerText)||0;
+  document.getElementById("changeOut").innerText=Math.max(0,cash-total).toFixed(0);
 }
-
-function updateStoreInfo(){ document.getElementById("storeInfo").innerText=`${currentStore.name} (${currentStore.code})`; }
-document.getElementById("logoutBtn").onclick=()=>{ document.getElementById("posApp").style.display="none"; document.getElementById("loginPage").style.display="flex"; sessionStorage.clear(); location.reload(); }
 
 document.getElementById("posCheckout").onclick = function() {
     const total = Number(document.getElementById("posTotal").innerText) || 0;
