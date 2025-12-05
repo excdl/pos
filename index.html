@@ -85,6 +85,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 <div id="posApp" style="display:none;">
   <div id="posCategories">
     <input type="text" id="searchBox" placeholder="搜尋商品">
+    <h3 id="storeDisplay" style="color:yellow;font-size:0.9em;"></h3>
     <h3>分類</h3>
   </div>
   <div id="posProducts"></div>
@@ -153,32 +154,64 @@ let products=[],categories=[],posCart=[];
 let currentTax="應稅", editIndex=null, editingField=null, modalType=null;
 let POS_STORE = ""; // 登入後的門市編號
 
-function login(){
+  // ====== 更快的 IP 取得（含 sessionStorage 快取）======
+async function getIP() {
+    const cache = sessionStorage.getItem("myIP");
+    if (cache) return cache;
+
+    try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        sessionStorage.setItem("myIP", data.ip);
+        return data.ip;
+    } catch {
+        return "";   // ★ IP 抓不到仍可登入
+    }
+}
+
+
+ async function login(){
   const store = document.getElementById("storeInput").value.trim();
   const pwd = document.getElementById("passwordInput").value.trim();
+  const userIP = await getIP();   // ★ 取得 IP
+
   if(!store || !pwd){
     document.getElementById("loginMsg").innerText="請輸入門市編號及密碼";
     return;
   }
 
-  fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}`)
+  fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`)
     .then(res=>res.json())
     .then(res=>{
       if(res.status==="success"){
         document.getElementById("loginPage").style.display="none";
         document.getElementById("posApp").style.display="flex";
-        POS_STORE = res.storeCode; // 可以用來帶入商品 API
-        alert("歡迎："+res.storeName);
-        fetchProducts(); // 登入成功後再載入商品
+
+        POS_STORE = res.storeCode;
+        document.getElementById("storeDisplay").innerText =
+        `登入門市：${res.storeName} (${res.storeCode})`;
+
+        // ★ 顯示歡迎訊息
+        const now = new Date();
+        const timeStr = now.toLocaleString("zh-TW",{hour12:false});
+
+        if(res.ipMatch==="YES"){
+          alert(`歡迎啟用【${res.storeName}】POS 系統\n登入時間：${timeStr}`);
+        } else {
+          alert(`歡迎使用 POS 系統（IP 未比對）\n門市：${res.storeName}\n登入時間：${timeStr}`);
+        }
+
+        fetchProducts();
       } else {
         document.getElementById("loginMsg").innerText=res.message;
       }
     })
     .catch(err=>{
-      document.getElementById("loginMsg").innerText="登入失敗，請稍後再試";
       console.error(err);
+      document.getElementById("loginMsg").innerText="登入失敗，請稍後再試";
     });
 }
+
 
 // ===== 取得商品 =====
 async function fetchProducts(){
