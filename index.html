@@ -217,12 +217,6 @@ async function logout() {
 document.getElementById("loginBtn").addEventListener("click",login);
 document.getElementById("logoutBtn").addEventListener("click",logout);
 
-function setTax(t){
-  currentTax = t;
-  document.getElementById("taxIncluded").classList.toggle('active',t==="應稅");
-  document.getElementById("taxExempt").classList.toggle('active',t==="免稅");
-  renderCart();
-}
 
 // ===== 取得商品 =====
 async function fetchProducts() {
