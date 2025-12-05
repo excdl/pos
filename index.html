@@ -170,10 +170,13 @@ function updateLoginTime() {
 }
 
 // ===== 登入 =====
-function login() {
+const loginBtn = document.getElementById("loginBtn");
+    loginBtn.innerText = "登入中..."; // 點擊後立即顯示
+    loginBtn.disabled = true; // 防止重複點擊
+
     const store = document.getElementById("storeInput").value;
     const pwd = document.getElementById("passwordInput").value;
-    const userIP = "127.0.0.1"; // 或者從其他地方獲取 IP 地址
+    const userIP = "127.0.0.1"; 
 
     fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`)
       .then(res => res.json())
@@ -182,28 +185,27 @@ function login() {
           document.getElementById("loginPage").style.display = "none";
           document.getElementById("posApp").style.display = "flex";
           POS_STORE = res.storeCode;
-          
-          // 顯示門市名稱和編號
-          document.getElementById("storeInfo").innerHTML = 
-            `${res.storeName}（${res.storeCode}）`; // 仅显示门市信息，不更新时间部分
 
-          // 顯示登入時間
+          document.getElementById("storeInfo").innerHTML = `${res.storeName}（${res.storeCode}）`;
+
           const now = new Date();
           const timeStr = now.toLocaleString("zh-TW", { hour12: false });
           document.getElementById("loginTime").innerText = `登入時間：${timeStr}`;
-
-          // 啟動時鐘更新
-          setInterval(updateLoginTime, 1000); // 每秒更新一次时间
+          setInterval(updateLoginTime, 1000);
 
           alert("歡迎：" + res.storeName);
           fetchProducts();
         } else {
           document.getElementById("loginMsg").innerText = res.message;
+          loginBtn.innerText = "登入"; // 恢復按鈕文字
+          loginBtn.disabled = false;
         }
       })
       .catch(err => {
         document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
         console.error(err);
+        loginBtn.innerText = "登入"; // 恢復按鈕文字
+        loginBtn.disabled = false;
       });
 }
 
