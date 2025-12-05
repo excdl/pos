@@ -84,42 +84,30 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 <div id="posApp" style="display:none;">
    <!-- POS 左側欄 -->
-<div id="posCategories" style="width:250px; padding:10px; border-right:1px solid #ccc; float:left;">
+<div id="posCategories" style="width:250px; padding:10px; border-right:1px solid #ccc; float:left; display:flex; flex-direction:column; height:100vh; box-sizing:border-box;">
 
-  <!-- 店鋪資訊 -->
-  <div id="storeInfo" style="font-size:14px; font-weight:bold; margin-bottom:10px;"></div>
+  <!-- 上方固定區: 店鋪資訊 + 登出 + 搜尋 -->
+  <div style="margin-bottom:10px;">
+    <div id="storeInfo" style="font-size:14px; font-weight:bold; margin-bottom:10px;"></div>
+    <button id="logoutBtn" style="
+        margin-bottom:10px;
+        font-size:13px;
+        background-color:#FFE066; /* 鵝黃色 */
+        border:none;
+        padding:5px 10px;
+        cursor:pointer;
+    ">
+        登出
+    </button>
+    <input type="text" id="searchBox" placeholder="搜尋商品" style="width:100%; padding:5px; margin-bottom:10px;">
+  </div>
 
-  <!-- 登出按鈕 -->
-  <button id="logoutBtn" style="
-      margin-bottom:10px;
-      font-size:13px;
-      background-color:#FFE066; /* 鵝黃色 */
-      border:none;
-      padding:5px 10px;
-      cursor:pointer;
-  ">
-      登出
-  </button>
-
-  <!-- 搜尋欄 -->
-  <input type="text" id="searchBox" placeholder="搜尋商品" style="width:100%; padding:5px; margin-bottom:10px;">
-
-  <!-- 商品分類 -->
-  <h3>分類</h3>
-  <ul id="categoryList" style="list-style:none; padding-left:0; margin:0;"></ul>
-
+  <!-- 下方分類滾動區 -->
+  <div style="flex:1; overflow-y:auto;">
+    <h3>分類</h3>
+    <ul id="categoryList" style="list-style:none; padding-left:0; margin:0;"></ul>
+  </div>
 </div>
- 
-  <div id="posProducts"></div>
-  <div id="posCartContainer">
-    <h3 style="font-size:85%;">訂單明細</h3>
-    <div class="cartHeader">
-      <span>商品</span>
-      <span>數量</span>
-      <span>單價</span>
-      <span>小計</span>
-      <span>刪除</span>
-    </div>
     <div id="posCart"></div>
     <div id="discountContainer">
       <input type="text" id="discount" placeholder="折扣金額" readonly>
