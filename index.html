@@ -464,21 +464,31 @@ function updateStoreInfo(){
 // 每秒更新
 setInterval(updateStoreInfo, 1000);
 
-// 登出事件
-document.getElementById("logoutBtn").addEventListener("click", function(){
-    if(!window.currentStore) return;
+document.getElementById("logoutBtn").addEventListener("click", () => {
+    // 1. 寫入登出紀錄
+    const now = new Date();
+    const storeCode = currentStore.code;   // 假設你登入時有存
+    const storeName = currentStore.name;
+    const userIP = currentStore.ip || "";
+    const ipMatched = currentStore.ipMatched || "NO";
 
-    fetch(`https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec?action=logout&store=${window.currentStore.code}&storeName=${window.currentStore.name}&ip=${window.currentIP}`)
-    .then(res=>res.json())
-    .then(res=>{
-        if(res.status==="success"){
-            alert("已登出");
-            window.location.reload();
-        } else {
-            alert("登出失敗: "+res.message);
-        }
+    fetch(`https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec?action=logout`, {
+        method: "POST",
+        body: JSON.stringify({
+            store: storeCode,
+            storeName,
+            ip: userIP,
+            ipMatched,
+            logoutTime: now.toISOString()
+        })
+    }).finally(() => {
+        // 2. 回到登入頁
+        currentStore = null;
+        document.getElementById("posApp").style.display = "none";
+        document.getElementById("loginPage").style.display = "block";  // 假設你的登入頁 id="loginPage"
     });
 });
+
 
 
 
