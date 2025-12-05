@@ -147,32 +147,34 @@ async function login() {
   }
 }
 
-// 登出
 async function logout() {
   const now = new Date();
   const logoutTime = now.toLocaleString("zh-TW",{hour12:false});
 
-  try{
+  try {
     await fetch(`${API_URL}?action=logout&store=${POS_STORE}&time=${encodeURIComponent(logoutTime)}`);
-  } catch(err){ console.error(err); }
+  } catch(err) {
+    console.error(err);
+  }
 
-  document.getElementById("posApp").style.display="none";
-  document.getElementById("loginPage").style.display="flex";
-  document.getElementById("loginBtn").innerText="登入";
-  document.getElementById("loginBtn").disabled=false;
-  document.getElementById("loginMsg").innerText="";
+  // 隱藏 POS 主頁，顯示登入頁
+  document.getElementById("posApp").style.display = "none";
+  document.getElementById("loginPage").style.display = "flex";
+
+  // 清空登入欄位
+  document.getElementById("storeInput").value = "";
+  document.getElementById("passwordInput").value = "";
+  document.getElementById("loginMsg").innerText = "";
+
+  // 重置登入按鈕狀態
+  const loginBtn = document.getElementById("loginBtn");
+  loginBtn.innerText = "登入";
+  loginBtn.disabled = false;
+
+  // 清除 POS_STORE
+  POS_STORE = "";
 }
 
-// 綁定按鈕事件
-document.getElementById("loginBtn").addEventListener("click",login);
-document.getElementById("logoutBtn").addEventListener("click",logout);
-
-function setTax(t){
-  currentTax = t;
-  document.getElementById("taxIncluded").classList.toggle('active',t==="應稅");
-  document.getElementById("taxExempt").classList.toggle('active',t==="免稅");
-  renderCart();
-}
 
 // ===== 取得商品 =====
 async function fetchProducts() {
