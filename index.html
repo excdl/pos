@@ -84,10 +84,12 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 <div id="posApp" style="display:none;">
   <div id="posCategories">
+    <div id="posCategories">
+    <div id="storeInfo" style="font-size:14px;font-weight:bold;margin-bottom:10px;"></div>
     <input type="text" id="searchBox" placeholder="搜尋商品">
-    <h3 id="storeDisplay" style="color:yellow;font-size:0.9em;"></h3>
     <h3>分類</h3>
-  </div>
+</div>
+ 
   <div id="posProducts"></div>
   <div id="posCartContainer">
     <h3 style="font-size:85%;">訂單明細</h3>
@@ -170,14 +172,14 @@ async function getIP() {
 }
   
 async function login(){
-const store = document.getElementById("storeInput").value.trim();
-const pwd = document.getElementById("passwordInput").value.trim();
-if(!store || !pwd){
+  const store = document.getElementById("storeInput").value.trim();
+  const pwd = document.getElementById("passwordInput").value.trim();
+  if(!store || !pwd){
     document.getElementById("loginMsg").innerText="請輸入門市編號及密碼";
     return;
   }
 
-  // ★ 取得 IP（含快取）
+  // ★ 取得 IP
   const userIP = await getIP();
 
   fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`)
@@ -186,8 +188,15 @@ if(!store || !pwd){
       if(res.status==="success"){
         document.getElementById("loginPage").style.display="none";
         document.getElementById("posApp").style.display="flex";
-        POS_STORE = res.storeCode; 
-        alert("歡迎：" + res.storeName + "\nIP比對：" + res.ipMatch);
+        POS_STORE = res.storeCode;
+
+        // ★ 顯示門市名稱、編號、登入時間
+        const now = new Date();
+        const timeStr = now.toLocaleString("zh-TW", { hour12: false });
+        document.getElementById("storeInfo").innerHTML = 
+            `${res.storeName}（${res.storeCode}）<br>${timeStr}`;
+
+        alert("歡迎：" + res.storeName);
         fetchProducts();
       } else {
         document.getElementById("loginMsg").innerText=res.message;
@@ -198,6 +207,7 @@ if(!store || !pwd){
       console.error(err);
     });
 }
+
 
 
 // ===== 取得商品 =====
