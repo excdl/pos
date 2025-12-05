@@ -84,10 +84,16 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 <div id="posApp" style="display:none;">
       <div id="posCategories">
-    <div id="storeInfo" style="font-size:14px;font-weight:bold;margin-bottom:10px;"></div>
+    <!-- 店鋪資訊 + 登出按鈕 -->
+    <div id="storeInfo" style="font-size:14px;font-weight:bold;margin-bottom:10px;">
+        <!-- 這裡會由 JS 填入 -->
+    </div>
+    <button id="logoutBtn" style="margin-bottom:10px;font-size:13px;">登出</button>
+
     <input type="text" id="searchBox" placeholder="搜尋商品">
     <h3>分類</h3>
 </div>
+
  
   <div id="posProducts"></div>
   <div id="posCartContainer">
@@ -427,6 +433,39 @@ document.getElementById("posCheckout").onclick=function(){
   document.getElementById("cashInput").value=""; 
   document.getElementById("changeOut").textContent="0";
 }
+// 假設登入成功時已存全局變數
+// window.currentStore = { code:"POS01", name:"門市A" };
+// window.currentIP = "192.168.1.100";
+
+function updateStoreInfo(){
+    if(!window.currentStore) return;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("zh-TW", {hour12:false});
+    document.getElementById("storeInfo").innerText = 
+        `門市名稱: ${window.currentStore.name}  |  編號: ${window.currentStore.code}  |  時間: ${timeStr}`;
+}
+
+// 每秒更新時間
+setInterval(updateStoreInfo, 1000);
+
+// 登出按鈕事件
+document.getElementById("logoutBtn").addEventListener("click", function(){
+    if(!window.currentStore) return;
+
+    fetch(`https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec?action=logout&store=${window.currentStore.code}&storeName=${window.currentStore.name}&ip=${window.currentIP}`)
+    .then(res=>res.json())
+    .then(res=>{
+        if(res.status==="success"){
+            alert("已登出");
+            window.location.reload(); // 返回登入頁或刷新
+        } else {
+            alert("登出失敗: "+res.message);
+        }
+    });
+});
+
+
+
 </script>
 
 <!-- 結帳 Modal -->
