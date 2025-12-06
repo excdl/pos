@@ -104,6 +104,12 @@ button{cursor:pointer;outline:none;transition:0.2s;}
     <button id="posCheckout">結帳列印</button>
   </div>
 </div>
+  <!-- 交班按鈕 -->
+  <button id="shiftEndBtn" style="margin-top:10px; background:#c0392b; color:white; padding:10px; border:none; border-radius:6px;">交班結算</button>
+  
+  <!-- 當日營業額按鈕 -->
+  <button id="dailySalesBtn" style="margin-top:10px; background:#2980b9; color:white; padding:10px; border:none; border-radius:6px;">當日營業額</button>
+</div>
   <!-- 編輯 Modal -->
 <div id="editModal">
   <div class="modalContent">
@@ -337,7 +343,60 @@ function renderCart() {
     document.getElementById("posTotal").innerText = (taxBase + tax).toFixed(0);
     updateChange();
 }
+// 交班按鈕功能
+document.getElementById("shiftEndBtn").onclick = async function() {
+    if (posCart.length > 0 && !confirm("購物車尚有未結帳商品，是否仍交班？")) return;
 
+    const now = new Date();
+    const payload = {
+        action: "shiftEnd",
+        storeCode: POS_STORE,
+        shiftEndTime: now.toLocaleString("zh-TW", { hour12: false }),
+        totalSales: Number(document.getElementById("posTotal").innerText) || 0,
+        cashSales: Number(document.getElementById("cashInput").value) || 0,
+        creditCardSales: 0, // 可依付款方式計算累計
+        linePaySales: 0,
+        itemsSold: posCart.map(it => ({
+            name: it.name,
+            quantity: it.quantity,
+            subtotal: calcDiscountedSubtotal(it)
+        }))
+    };
+
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        alert("交班完成！已記錄當班營業額。");
+    } catch(err) {
+        console.error(err);
+        alert("交班失敗！");
+    }
+
+    // 清空購物車
+    posCart = [];
+    document.getElementById("discount").value = "0";
+    document.getElementById("cashInput").value = "";
+    document.getElementById("changeOut").textContent = "0";
+    renderCart();
+};
+
+// 當日營業額功能
+document.getElementById("dailySalesBtn").onclick = async function() {
+    try {
+        const res = await fetch(`${API_URL}?action=dailySales&store=${POS_STORE}`);
+        const data = await res.json();
+        if (data.status === "success") {
+            alert(`今日營業額：${data.total} 元\n現金：${data.cash}\n信用卡：${data.creditCard}\nLine Pay：${data.linePay}`);
+        } else {
+            alert("無法取得當日營業額");
+        }
+    } catch(err) {
+        console.error(err);
+        alert("取得當日營業額失敗");
+    }
+};
 // ===== 刪除商品 =====
 function removeItem(i) { posCart.splice(i, 1); renderCart(); }
 
