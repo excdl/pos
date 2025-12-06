@@ -433,6 +433,29 @@ function updateChange() {
     let total = Number(document.getElementById("posTotal").innerText) || 0;
     document.getElementById("changeOut").innerText = Math.max(0, cash - total).toFixed(0);
 }
+function calcDiscountedSubtotal(item) {
+    let sub = item.quantity * item.price;
+    if (item.discount) {
+        switch (item.discount.type) {
+            case "第二件減10":
+                sub -= Math.floor(item.quantity / 2) * 10;
+                break;
+            case "買二送一":
+                sub -= Math.floor(item.quantity / 3) * item.price;
+                break;
+            case "買一送一":
+                sub -= Math.floor(item.quantity / 2) * item.price;
+                break;
+            case "第二件6折":
+                sub -= Math.floor(item.quantity / 2) * item.price * 0.4;
+                break;
+            case "折扣":      // 例如 95折、9折
+                sub *= item.discount.rate;
+                break;
+        }
+    }
+    return Math.round(sub);
+}
 
   async function sendCheckoutToSheet() {
 
@@ -455,13 +478,31 @@ function updateChange() {
         change: Number(document.getElementById("changeOut").innerText) || 0,
 
         items: posCart.map(it => {
+
+            // ① 小計（折扣後）
+            const discountedSubtotal = calcDiscountedSubtotal(it);
+
+            // ② 折扣文字（ex: 95折 / 買二送一）
+            let promoText = "";
+            if (it.discount) {
+                if (it.discount.type === "折扣") {
+                    promoText = `${(it.discount.rate * 100).toFixed(0)}折`;
+                } else {
+                    promoText = it.discount.type;
+                }
+            }
+
             return {
                 category: products.find(p => p["商品名稱"] === it.name)?.["類別"] || "",
                 name: it.name,
                 quantity: it.quantity,
                 price: it.price,
-                subtotal: (it.quantity * it.price),
-                promo: it.discount ? (it.discount.type || `${it.discount.rate * 100}%`) : ""
+
+                // 寫入試算表的：折扣後小計
+                subtotal: discountedSubtotal,
+
+                // 寫入試算表的折扣名稱
+                promo: promoText
             };
         })
     };
@@ -471,6 +512,7 @@ function updateChange() {
         body: JSON.stringify(payload)
     });
 }
+
 
 
 // ===== 小票列印 =====
@@ -514,7 +556,8 @@ document.getElementById("posCheckout").onclick = async function () {
                 case "買二送一": sub -= Math.floor(item.quantity / 3) * item.price; discountText = "買二送一"; break;
                 case "買一送一": sub -= Math.floor(item.quantity / 2) * item.price; discountText = "買一送一"; break;
                 case "第二件6折": sub -= Math.floor(item.quantity / 2) * item.price * 0.4; discountText = "第二件6折"; break;
-                default: sub *= item.discount.rate || 1; discountText = `折扣 ${(1 - item.discount.rate) * 100}%`; break;
+                default: sub *= item.discount.rate || 1; discountText = `${(item.discount.rate * 100).toFixed(0)}折`;
+; break;
             }
         }
         let lines = [];
