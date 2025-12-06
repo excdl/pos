@@ -136,7 +136,7 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbz9T4QG8yd-KTHM5iBrhu06YNOka1DQf1vVuMxk2Bl1y8B536Ijdb4XamIO3_euawS_/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw1B2G9uGPDWluBkK25JjXBY9P1fj0Oevonuh_aWn5a2dSLJaProH1NoZR-rldEraN_/exec";
 let POS_STORE = "";
 let posCart = [], currentTax = "應稅";
 
@@ -345,18 +345,23 @@ function renderCart() {
     updateChange();
 }
 
+// 交班按鈕
 document.getElementById("shiftEndBtn").onclick = async function() {
-
-  if (posCart.length > 0 && !confirm("購物車尚有未結帳商品，是否仍交班？"))
-    return;
+  if (posCart.length > 0 && !confirm("購物車尚有未結帳商品，是否仍交班？")) return;
 
   const now = new Date();
+  const formatDate = now.getFullYear() + "/" +
+                     String(now.getMonth() + 1).padStart(2, "0") + "/" +
+                     String(now.getDate()).padStart(2, "0");
+  const formatTime = String(now.getHours()).padStart(2, "0") + ":" +
+                     String(now.getMinutes()).padStart(2, "0") + ":" +
+                     String(now.getSeconds()).padStart(2, "0");
 
   const payload = {
     storeCode: POS_STORE,
     storeName: document.getElementById("storeInfo").innerText.split("（")[0],
-    shiftDate: now.toLocaleDateString("zh-TW"),
-    shiftEndTime: now.toLocaleTimeString("zh-TW", { hour12: false })
+    shiftDate: formatDate,
+    shiftEndTime: formatTime
   };
 
   const res = await fetch(API_URL + "?action=shiftEnd", {
@@ -371,21 +376,34 @@ document.getElementById("shiftEndBtn").onclick = async function() {
   renderCart();
 };
 
-  async function updateTodaySales() {
-  const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE);
+// 更新今日營業額
+async function updateTodaySales() {
+  const now = new Date();
+  const formatDate = now.getFullYear() + "/" +
+                     String(now.getMonth() + 1).padStart(2, "0") + "/" +
+                     String(now.getDate()).padStart(2, "0");
+
+  const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE + "&date=" + formatDate);
   const data = await res.json();
 
   document.getElementById("todaySalesDisplay").innerText =
     "今日營業額：" + data.total + " 元";
 }
 
+// 今日營業額按鈕
 document.getElementById("dailySalesBtn").onclick = async function () {
-  const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE);
+  const now = new Date();
+  const formatDate = now.getFullYear() + "/" +
+                     String(now.getMonth() + 1).padStart(2, "0") + "/" +
+                     String(now.getDate()).padStart(2, "0");
+
+  const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE + "&date=" + formatDate);
   const data = await res.json();
 
   alert("今日營業額：" + data.total + " 元");
   updateTodaySales();
 };
+
 
 // ===== 刪除商品 =====
 function removeItem(i) { posCart.splice(i, 1); renderCart(); }
