@@ -387,14 +387,6 @@ document.getElementById("todaySalesBtn").onclick = async function () {
   updateTodaySales();
 };
 
-  
-    // 清空購物車
-    posCart = [];
-    document.getElementById("discount").value = "0";
-    document.getElementById("cashInput").value = "";
-    document.getElementById("changeOut").textContent = "0";
-    renderCart();
-};
 // ===== 刪除商品 =====
 function removeItem(i) { posCart.splice(i, 1); renderCart(); }
 
