@@ -499,7 +499,8 @@ function calcDiscountedSubtotal(item) {
             let promoText = "";
             if (it.discount) {
                 if (it.discount.type === "折扣") {
-                    promoText = `${(it.discount.rate * 100).toString().replace(/\.0+$/, "")}折`;
+                    promoText = formatDiscountRate(it.discount.rate);
+
 
                 } else {
                     promoText = it.discount.type;
@@ -570,7 +571,8 @@ document.getElementById("posCheckout").onclick = async function () {
                 case "買二送一": sub -= Math.floor(item.quantity / 3) * item.price; discountText = "買二送一"; break;
                 case "買一送一": sub -= Math.floor(item.quantity / 2) * item.price; discountText = "買一送一"; break;
                 case "第二件6折": sub -= Math.floor(item.quantity / 2) * item.price * 0.4; discountText = "第二件6折"; break;
-                default: sub *= item.discount.rate || 1; discountText = `${(item.discount.rate * 100).toFixed(0)}折`;
+                default: sub *= item.discount.rate || 1; discountText = formatDiscountRate(item.discount.rate);
+;
 ; break;
             }
         }
