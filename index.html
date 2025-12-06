@@ -369,8 +369,14 @@ document.getElementById("shiftEndBtn").onclick = async function() {
     body: JSON.stringify(payload)
   });
 
-  const data = await res.json();
-  alert("交班成功！本班營業額：" + data.total + " 元");
+ const data = await res.json();
+
+alert(`交班成功！
+本班總營業額：${data.total} 元
+現金：${data.cash} 元
+信用卡：${data.credit} 元
+Line Pay：${data.linePay} 元`);
+
 
   posCart = [];
   renderCart();
@@ -390,8 +396,7 @@ async function updateTodaySales() {
     "今日營業額：" + data.total + " 元";
 }
 
-// 今日營業額按鈕
-document.getElementById("dailySalesBtn").onclick = async function () {
+async function updateTodaySales() {
   const now = new Date();
   const formatDate = now.getFullYear() + "/" +
                      String(now.getMonth() + 1).padStart(2, "0") + "/" +
@@ -400,9 +405,18 @@ document.getElementById("dailySalesBtn").onclick = async function () {
   const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE + "&date=" + formatDate);
   const data = await res.json();
 
-  alert("今日營業額：" + data.total + " 元");
-  updateTodaySales();
-};
+  // 更新顯示
+  document.getElementById("todaySalesDisplay").innerText =
+    `今日營業額：
+總額：${data.total} 元
+現金：${data.cash} 元
+信用卡：${data.credit} 元
+Line Pay：${data.linePay} 元`;
+}
+
+// 點擊按鈕也更新
+document.getElementById("dailySalesBtn").onclick = updateTodaySales;
+
 
 
 // ===== 刪除商品 =====
