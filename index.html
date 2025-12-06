@@ -379,7 +379,7 @@ document.getElementById("shiftEndBtn").onclick = async function() {
     "今日營業額：" + data.total + " 元";
 }
 
-document.getElementById("todaySalesBtn").onclick = async function () {
+document.getElementById("dailySalesBtn").onclick = async function () {
   const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE);
   const data = await res.json();
 
