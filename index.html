@@ -101,15 +101,15 @@ button{cursor:pointer;outline:none;transition:0.2s;}
       <input id="cashInput" placeholder="收現金額" type="text" readonly>
       <p>找零：<span id="changeOut">0</span> 元</p>
     </div>
-    <button id="posCheckout">結帳列印</button>
-  </div>
-  <!-- 交班按鈕 -->
-  <button id="shiftEndBtn" style="margin-top:10px; background:#c0392b; color:white; padding:10px; border:none; border-radius:6px;">交班結算</button>
-  
-  <!-- 當日營業額按鈕 -->
-  <button id="dailySalesBtn" style="margin-top:10px; background:#2980b9; color:white; padding:10px; border:none; border-radius:6px;">當日營業額</button>
+  <!-- 結帳按鈕 -->
+<button id="posCheckout">結帳列印</button>
+
+<!-- 交班與當日營業額按鈕容器 -->
+<div id="shiftDailyContainer" style="display:flex; gap:10px; margin-top:10px;">
+  <button id="shiftEndBtn" style="flex:1; background:#c0392b; color:white; border:none; border-radius:6px; padding:10px;">交班結算</button>
+  <button id="dailySalesBtn" style="flex:1; background:#2980b9; color:white; border:none; border-radius:6px; padding:10px;">當日營業額</button>
 </div>
-</div>
+
   
   <!-- 編輯 Modal -->
 <div id="editModal">
