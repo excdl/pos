@@ -104,11 +104,13 @@ button{cursor:pointer;outline:none;transition:0.2s;}
   <!-- 結帳按鈕 -->
 <button id="posCheckout">結帳列印</button>
 
-<!-- 交班與當日營業額按鈕容器 -->
-<div id="shiftDailyContainer" style="display:flex; gap:10px; margin-top:10px;">
+<div id="shiftDailyContainer" style="display:flex; gap:10px; margin:20px 0;">
   <button id="shiftEndBtn" style="flex:1; background:#c0392b; color:white; border:none; border-radius:6px; padding:10px;">交班結算</button>
   <button id="dailySalesBtn" style="flex:1; background:#2980b9; color:white; border:none; border-radius:6px; padding:10px;">當日營業額</button>
 </div>
+
+<div id="todaySalesDisplay" style="margin-top:10px; white-space:pre-line;"></div>
+
 
   
   <!-- 編輯 Modal -->
@@ -345,6 +347,27 @@ function renderCart() {
     updateChange();
 }
 
+async function updateTodaySales() {
+  const now = new Date();
+  const formatDate = now.getFullYear() + "/" +
+                     String(now.getMonth() + 1).padStart(2, "0") + "/" +
+                     String(now.getDate()).padStart(2, "0");
+
+  const res = await fetch(`${API_URL}?action=todaySales&storeCode=${POS_STORE}&date=${formatDate}`);
+  const data = await res.json();
+
+  if(data.status === "success") {
+    document.getElementById("todaySalesDisplay").innerText =
+      `今日營業額：
+總額：${data.total} 元
+現金：${data.cash} 元
+信用卡：${data.credit} 元
+Line Pay：${data.linePay} 元`;
+  } else {
+    console.error("取得今日營業額失敗：", data.message);
+  }
+}
+
 // 交班按鈕
 document.getElementById("shiftEndBtn").onclick = async function() {
   if (posCart.length > 0 && !confirm("購物車尚有未結帳商品，是否仍交班？")) return;
@@ -364,58 +387,30 @@ document.getElementById("shiftEndBtn").onclick = async function() {
     shiftEndTime: formatTime
   };
 
-  const res = await fetch(API_URL + "?action=shiftEnd", {
+  const res = await fetch(`${API_URL}?action=shiftEnd`, {
     method: "POST",
     body: JSON.stringify(payload)
   });
 
- const data = await res.json();
+  const data = await res.json();
 
-alert(`交班成功！
+  alert(`交班成功！
 本班總營業額：${data.total} 元
 現金：${data.cash} 元
 信用卡：${data.credit} 元
 Line Pay：${data.linePay} 元`);
 
-
   posCart = [];
   renderCart();
+  updateTodaySales(); // 交班後立即更新今日營業額
 };
-
-// 更新今日營業額
-async function updateTodaySales() {
-  const now = new Date();
-  const formatDate = now.getFullYear() + "/" +
-                     String(now.getMonth() + 1).padStart(2, "0") + "/" +
-                     String(now.getDate()).padStart(2, "0");
-
-  const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE + "&date=" + formatDate);
-  const data = await res.json();
-
-  document.getElementById("todaySalesDisplay").innerText =
-    "今日營業額：" + data.total + " 元";
-}
-
-async function updateTodaySales() {
-  const now = new Date();
-  const formatDate = now.getFullYear() + "/" +
-                     String(now.getMonth() + 1).padStart(2, "0") + "/" +
-                     String(now.getDate()).padStart(2, "0");
-
-  const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE + "&date=" + formatDate);
-  const data = await res.json();
-
-  // 更新顯示
-  document.getElementById("todaySalesDisplay").innerText =
-    `今日營業額：
-總額：${data.total} 元
-現金：${data.cash} 元
-信用卡：${data.credit} 元
-Line Pay：${data.linePay} 元`;
-}
 
 // 點擊按鈕也更新
 document.getElementById("dailySalesBtn").onclick = updateTodaySales;
+
+// 初始載入頁面時也更新
+updateTodaySales();
+
 
 
 
