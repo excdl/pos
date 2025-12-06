@@ -135,227 +135,143 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 <!-- 列印收據區 -->
 <div id="printArea"></div>
 
-
-
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwGYOcjCbZSFu9UYWXZFXGawpfuEWQWPVFnfxpERzkBcv2RMK4QL2T0imUufHXbQVBp/exec";
-let POS_STORE = "";
-let posCart = [], currentTax = "應稅";
+document.addEventListener("DOMContentLoaded", () => {
+  const API_URL = "https://script.google.com/macros/s/AKfycbwGYOcjCbZSFu9UYWXZFXGawpfuEWQWPVFnfxpERzkBcv2RMK4QL2T0imUufHXbQVBp/exec";
+  let POS_STORE = "";
+  let posCart = [], currentTax = "應稅";
+  let products = [], categories = [];
 
-  // ====== 更快的 IP 取得（含 sessionStorage 快取）======
-async function getIP() {
+  // ====== 取得 IP (含快取) ======
+  async function getIP() {
     const cache = sessionStorage.getItem("myIP");
     if (cache) return cache;
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      const data = await res.json();
+      sessionStorage.setItem("myIP", data.ip);
+      return data.ip;
+    } catch { return ""; }
+  }
+
+  // ===== 更新登入時間 =====
+  function updateLoginTime() {
+    const now = new Date();
+    const elem = document.getElementById("loginTime");
+    if(elem) elem.innerText = `登入時間：${now.toLocaleString("zh-TW",{hour12:false})}`;
+  }
+
+  // ===== 登入 =====
+  async function login() {
+    const loginBtn = document.getElementById("loginBtn");
+    if(!loginBtn) return;
+
+    loginBtn.innerText = "登入中...";
+    loginBtn.disabled = true;
+
+    const store = document.getElementById("storeInput")?.value || "";
+    const pwd = document.getElementById("passwordInput")?.value || "";
+    const userIP = await getIP();
 
     try {
-        const res = await fetch("https://api.ipify.org?format=json");
-        const data = await res.json();
-        sessionStorage.setItem("myIP", data.ip);
-        return data.ip;
-    } catch {
-        return "";
-    }
-}
+      const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`);
+      const data = await res.json();
 
-function updateLoginTime() {
-  const now = new Date();
-  document.getElementById("loginTime").innerText = `登入時間：${now.toLocaleString("zh-TW",{hour12:false})}`;
-}
+      if (data.status === "success") {
+        POS_STORE = data.storeCode;
 
-async function login() {
-  const loginBtn = document.getElementById("loginBtn");
-  loginBtn.innerText = "登入中...";
-  loginBtn.disabled = true;
+        // 隱藏登入頁，顯示 POS
+        const loginPage = document.getElementById("loginPage");
+        const posApp = document.getElementById("posApp");
+        if(loginPage) loginPage.style.display = "none";
+        if(posApp) posApp.style.display = "flex";
 
-  const store = document.getElementById("storeInput").value;
-  const pwd = document.getElementById("passwordInput").value;
-  const userIP = await getIP();
+        document.getElementById("storeInfo").innerText = `${data.storeName}（${data.storeCode}）`;
 
-  try {
-    const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`);
-    const data = await res.json();
+        updateLoginTime();
+        setInterval(updateLoginTime, 1000);
 
-    if (data.status === "success") {
-      POS_STORE = data.storeCode;
-
-      // 隱藏登入頁，顯示 POS
-      document.getElementById("loginPage").style.display = "none";
-      document.getElementById("posApp").style.display = "flex";
-
-      // 顯示門市資訊
-      document.getElementById("storeInfo").innerText = `${data.storeName}（${data.storeCode}）`;
-
-      // 更新並每秒刷新登入時間
-      updateLoginTime();
-      setInterval(updateLoginTime, 1000);
-
-      
-      // 取得商品資料
-      fetchProducts();
-    } else {
-      document.getElementById("loginMsg").innerText = data.message;
+        fetchProducts();
+      } else {
+        document.getElementById("loginMsg").innerText = data.message;
+        loginBtn.innerText = "登入";
+        loginBtn.disabled = false;
+      }
+    } catch (err) {
+      console.error(err);
+      document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
       loginBtn.innerText = "登入";
       loginBtn.disabled = false;
     }
-  } catch (err) {
-    console.error(err);
-    document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
-    loginBtn.innerText = "登入";
-    loginBtn.disabled = false;
-  }
-}
-
-// ===== 更新登入時間 =====
-function updateLoginTime() {
-  const now = new Date();
-  const timeStr = now.toLocaleString("zh-TW", { hour12: false });
-  document.getElementById("loginTime").innerText = `登入時間：${timeStr}`;
-}
-
-document.getElementById("logoutBtn").onclick = logout;
-
-async function logout() {
-  const now = new Date();
-  const logoutTime = now.toLocaleString("zh-TW",{hour12:false});
-
-  try {
-    // 呼叫 API 記錄登出時間
-    await fetch(`${API_URL}?action=logout&store=${POS_STORE}&time=${encodeURIComponent(logoutTime)}`);
-  } catch(err) {
-    console.error(err);
   }
 
-  // 隱藏 POS 主頁，顯示登入頁
-  document.getElementById("posApp").style.display = "none";
-  document.getElementById("loginPage").style.display = "flex";
+  // ===== 登出 =====
+  async function logout() {
+    const now = new Date();
+    const logoutTime = now.toLocaleString("zh-TW",{hour12:false});
+    try { await fetch(`${API_URL}?action=logout&store=${POS_STORE}&time=${encodeURIComponent(logoutTime)}`); } 
+    catch(err){ console.error(err); }
 
-  // 清空登入欄位
-  document.getElementById("storeInput").value = "";
-  document.getElementById("passwordInput").value = "";
-  document.getElementById("loginMsg").innerText = "";
+    const loginPage = document.getElementById("loginPage");
+    const posApp = document.getElementById("posApp");
+    if(posApp) posApp.style.display = "none";
+    if(loginPage) loginPage.style.display = "flex";
 
-  // 重置登入按鈕狀態
+    document.getElementById("storeInput").value = "";
+    document.getElementById("passwordInput").value = "";
+    document.getElementById("loginMsg").innerText = "";
+
+    const loginBtn = document.getElementById("loginBtn");
+    if(loginBtn){ loginBtn.innerText = "登入"; loginBtn.disabled = false; }
+
+    POS_STORE = "";
+  }
+
+  // ===== 綁定按鈕事件 =====
   const loginBtn = document.getElementById("loginBtn");
-  loginBtn.innerText = "登入";
-  loginBtn.disabled = false;
+  if(loginBtn) loginBtn.addEventListener("click", login);
 
-  // 清除 POS_STORE
-  POS_STORE = "";
-}
+  const logoutBtn = document.getElementById("logoutBtn");
+  if(logoutBtn) logoutBtn.addEventListener("click", logout);
+
+  const shiftEndBtn = document.getElementById("shiftEndBtn");
+  if(shiftEndBtn) shiftEndBtn.addEventListener("click", async () => {
+    if (posCart.length > 0 && !confirm("購物車尚有未結帳商品，是否仍交班？")) return;
+    const now = new Date();
+    const payload = {
+      storeCode: POS_STORE,
+      storeName: document.getElementById("storeInfo")?.innerText.split("（")[0] || "",
+      shiftDate: now.toLocaleDateString("zh-TW"),
+      shiftEndTime: now.toLocaleTimeString("zh-TW", { hour12: false })
+    };
+    try {
+      const res = await fetch(API_URL + "?action=shiftEnd", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      alert("交班成功！本班營業額：" + (data.total || 0) + " 元");
+      posCart = [];
+      renderCart();
+    } catch(err){
+      console.error(err);
+      alert("交班失敗，請稍後再試");
+    }
+  });
+
+  const todaySalesBtn = document.getElementById("todaySalesBtn");
+  if(todaySalesBtn) todaySalesBtn.addEventListener("click", async () => {
+    try {
+      const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE);
+      const data = await res.json();
+      alert("今日營業額：" + (data.total || 0) + " 元");
+
+      const display = document.getElementById("todaySalesDisplay");
+      if(display) display.innerText = "今日營業額：" + (data.total || 0) + " 元";
+    } catch(err){ console.error(err); }
+  });
+
   
-// 綁定按鈕事件
-document.getElementById("loginBtn").addEventListener("click",login);
-document.getElementById("logoutBtn").addEventListener("click",logout);
-
-
-// ===== 取得商品 =====
-async function fetchProducts() {
-    const res = await fetch(API_URL + "?action=products");
-    products = await res.json();
-    categories = [...new Set(products.map(x => x["類別"]))];
-    renderCategories();
-    if (categories.length > 0) renderProducts(categories[0]);
-}
-
-// ===== 渲染分類 =====
-function renderCategories() {
-    const box = document.getElementById("posCategories");
-    box.querySelectorAll("button.cat-btn").forEach(b => b.remove());
-
-    categories.forEach(cat => {
-        const btn = document.createElement("button");
-        btn.classList.add("cat-btn");
-        btn.textContent = cat;
-        btn.onclick = () => {
-            document.querySelectorAll("#posCategories button.cat-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            renderProducts(cat);
-        };
-        box.appendChild(btn);
-    });
-
-    const firstBtn = box.querySelector("button.cat-btn");
-    if (firstBtn) firstBtn.classList.add("active");
-}
-
-// ===== 搜尋商品 =====
-document.getElementById("searchBox").oninput = function () {
-    renderProducts(null, this.value.trim().toLowerCase());
-};
-
-// ===== 渲染商品 =====
-function renderProducts(category = null, search = "") {
-    const box = document.getElementById("posProducts");
-    box.innerHTML = "";
-    products.filter(p => {
-        if (category && p["類別"] !== category) return false;
-        if (search && !p["商品名稱"].toLowerCase().includes(search)) return false;
-        return true;
-    }).forEach(p => {
-        const card = document.createElement("div");
-        card.className = "product-card";
-        card.innerHTML = `<img src="${p["商品照片"]}"><h4>${p["商品名稱"]}</h4><p>${p["售價"]} 元 / ${p["單位"]}</p>`;
-        card.onclick = () => addPOSItem(p);
-        box.appendChild(card);
-    });
-}
-
-// ===== 加入購物車 =====
-function addPOSItem(p) {
-    let qtyAdd = 1;
-    let pricePerUnit = Number(p["售價"]);
-    let unit = p["單位"];
-    if (p["單位"] === "半斤") { qtyAdd = 0.5; pricePerUnit *= 2; unit = "斤"; }
-    let exist = posCart.find(x => x.name === p["商品名稱"]);
-    if (exist) { exist.quantity += qtyAdd; }
-    else { posCart.push({ name: p["商品名稱"], quantity: qtyAdd, price: pricePerUnit, unit: unit, discount: null }); }
-    renderCart();
-}
-// ===== 取得今日營業額 =====
-async function updateTodaySales() {
-  const display = document.getElementById("todaySalesDisplay");
-  if (!display) return;
-  try {
-    const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE);
-    const data = await res.json();
-    display.innerText = "今日營業額：" + (data.total || 0) + " 元";
-  } catch (err) {
-    console.error(err);
-    display.innerText = "今日營業額：0 元";
-  }
-}
-
-// ===== 交班結算 =====
-document.getElementById("shiftEndBtn").onclick = async function() {
-  if (posCart.length > 0 && !confirm("購物車尚有未結帳商品，是否仍交班？")) return;
-
-  const now = new Date();
-  const payload = {
-    storeCode: POS_STORE,
-    storeName: document.getElementById("storeInfo").innerText.split("（")[0],
-    shiftDate: now.toLocaleDateString("zh-TW"),
-    shiftEndTime: now.toLocaleTimeString("zh-TW",{hour12:false})
-  };
-
-  try {
-    const res = await fetch(API_URL + "?action=shiftEnd", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    alert("交班成功！本班營業額：" + (data.total || 0) + " 元");
-  } catch(err) {
-    console.error(err);
-    alert("交班失敗！");
-  }
-
-  posCart = [];
-  renderCart();
-  updateTodaySales();
-};
-
-// ===== 今日營業額按鈕 =====
-document.getElementById("todaySalesBtn").onclick = updateTodaySales;
 // ===== 渲染購物車 =====
 function renderCart() {
     const box = document.getElementById("posCart"); box.innerHTML = "";
@@ -692,6 +608,59 @@ document.getElementById("posCheckout").onclick = async function () {
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
