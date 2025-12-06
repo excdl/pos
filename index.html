@@ -140,7 +140,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxL8gvl1kGXaVOb6MUAIttp
 let POS_STORE = "";
 let posCart = [], currentTax = "應稅";
 
-  // ====== 更快的 IP 取得（含 sessionStorage 快取）======
+// ====== 更快的 IP 取得（含 sessionStorage 快取）======
 async function getIP() {
     const cache = sessionStorage.getItem("myIP");
     if (cache) return cache;
@@ -155,98 +155,83 @@ async function getIP() {
     }
 }
 
-
-
 function updateLoginTime() {
-  const now = new Date();
-  document.getElementById("loginTime").innerText = `登入時間：${now.toLocaleString("zh-TW",{hour12:false})}`;
+    const now = new Date();
+    document.getElementById("loginTime").innerText = `登入時間：${now.toLocaleString("zh-TW",{hour12:false})}`;
 }
 
 async function login() {
-  const loginBtn = document.getElementById("loginBtn");
-  loginBtn.innerText = "登入中...";
-  loginBtn.disabled = true;
+    const loginBtn = document.getElementById("loginBtn");
+    loginBtn.innerText = "登入中...";
+    loginBtn.disabled = true;
 
-  const store = document.getElementById("storeInput").value;
-  const pwd = document.getElementById("passwordInput").value;
-  const userIP = await getIP();
+    const store = document.getElementById("storeInput").value;
+    const pwd = document.getElementById("passwordInput").value;
+    const userIP = await getIP();
 
-  try {
-    const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`);
-    const data = await res.json();
+    try {
+        const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`);
+        const data = await res.json();
 
-    if (data.status === "success") {
-      POS_STORE = data.storeCode;
+        if (data.status === "success") {
+            POS_STORE = data.storeCode;
 
-      // 隱藏登入頁，顯示 POS
-      document.getElementById("loginPage").style.display = "none";
-      document.getElementById("posApp").style.display = "flex";
+            // 隱藏登入頁，顯示 POS
+            document.getElementById("loginPage").style.display = "none";
+            document.getElementById("posApp").style.display = "flex";
 
-      // 顯示門市資訊
-      document.getElementById("storeInfo").innerText = `${data.storeName}（${data.storeCode}）`;
+            // 顯示門市資訊
+            document.getElementById("storeInfo").innerText = `${data.storeName}（${data.storeCode}）`;
 
-      // 更新並每秒刷新登入時間
-      updateLoginTime();
-      setInterval(updateLoginTime, 1000);
+            // 更新並每秒刷新登入時間
+            updateLoginTime();
+            setInterval(updateLoginTime, 1000);
 
-      
-      // 取得商品資料
-      fetchProducts();
-    } else {
-      document.getElementById("loginMsg").innerText = data.message;
-      loginBtn.innerText = "登入";
-      loginBtn.disabled = false;
+            // 取得商品資料
+            fetchProducts();
+        } else {
+            document.getElementById("loginMsg").innerText = data.message;
+            loginBtn.innerText = "登入";
+            loginBtn.disabled = false;
+        }
+    } catch (err) {
+        console.error(err);
+        document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
+        loginBtn.innerText = "登入";
+        loginBtn.disabled = false;
     }
-  } catch (err) {
-    console.error(err);
-    document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
-    loginBtn.innerText = "登入";
-    loginBtn.disabled = false;
-  }
-}
-
-// ===== 更新登入時間 =====
-function updateLoginTime() {
-  const now = new Date();
-  const timeStr = now.toLocaleString("zh-TW", { hour12: false });
-  document.getElementById("loginTime").innerText = `登入時間：${timeStr}`;
 }
 
 document.getElementById("logoutBtn").onclick = logout;
 
 async function logout() {
-  const now = new Date();
-  const logoutTime = now.toLocaleString("zh-TW",{hour12:false});
+    const now = new Date();
+    const logoutTime = now.toLocaleString("zh-TW",{hour12:false});
 
-  try {
-    // 呼叫 API 記錄登出時間
-    await fetch(`${API_URL}?action=logout&store=${POS_STORE}&time=${encodeURIComponent(logoutTime)}`);
-  } catch(err) {
-    console.error(err);
-  }
+    try {
+        // 呼叫 API 記錄登出時間
+        await fetch(`${API_URL}?action=logout&store=${POS_STORE}&time=${encodeURIComponent(logoutTime)}`);
+    } catch(err) {
+        console.error(err);
+    }
 
-  // 隱藏 POS 主頁，顯示登入頁
-  document.getElementById("posApp").style.display = "none";
-  document.getElementById("loginPage").style.display = "flex";
+    // 隱藏 POS 主頁，顯示登入頁
+    document.getElementById("posApp").style.display = "none";
+    document.getElementById("loginPage").style.display = "flex";
 
-  // 清空登入欄位
-  document.getElementById("storeInput").value = "";
-  document.getElementById("passwordInput").value = "";
-  document.getElementById("loginMsg").innerText = "";
+    // 清空登入欄位
+    document.getElementById("storeInput").value = "";
+    document.getElementById("passwordInput").value = "";
+    document.getElementById("loginMsg").innerText = "";
 
-  // 重置登入按鈕狀態
-  const loginBtn = document.getElementById("loginBtn");
-  loginBtn.innerText = "登入";
-  loginBtn.disabled = false;
+    // 重置登入按鈕狀態
+    const loginBtn = document.getElementById("loginBtn");
+    loginBtn.innerText = "登入";
+    loginBtn.disabled = false;
 
-  // 清除 POS_STORE
-  POS_STORE = "";
+    // 清除 POS_STORE
+    POS_STORE = "";
 }
-  
-// 綁定按鈕事件
-document.getElementById("loginBtn").addEventListener("click",login);
-document.getElementById("logoutBtn").addEventListener("click",logout);
-
 
 // ===== 取得商品 =====
 async function fetchProducts() {
@@ -277,11 +262,6 @@ function renderCategories() {
     const firstBtn = box.querySelector("button.cat-btn");
     if (firstBtn) firstBtn.classList.add("active");
 }
-
-// ===== 搜尋商品 =====
-document.getElementById("searchBox").oninput = function () {
-    renderProducts(null, this.value.trim().toLowerCase());
-};
 
 // ===== 渲染商品 =====
 function renderProducts(category = null, search = "") {
@@ -344,6 +324,7 @@ function renderCart() {
     document.getElementById("posTotal").innerText = (taxBase + tax).toFixed(0);
     updateChange();
 }
+
 // 交班按鈕功能
 document.getElementById("shiftEndBtn").onclick = async function() {
     if (posCart.length > 0 && !confirm("購物車尚有未結帳商品，是否仍交班？")) return;
@@ -382,213 +363,6 @@ document.getElementById("shiftEndBtn").onclick = async function() {
     document.getElementById("changeOut").textContent = "0";
     renderCart();
 };
-
-// 當日營業額功能
-document.getElementById("dailySalesBtn").onclick = async function() {
-    try {
-        const res = await fetch(`${API_URL}?action=dailySales&store=${POS_STORE}`);
-        const data = await res.json();
-        if (data.status === "success") {
-            alert(`今日營業額：${data.total} 元\n現金：${data.cash}\n信用卡：${data.creditCard}\nLine Pay：${data.linePay}`);
-        } else {
-            alert("無法取得當日營業額");
-        }
-    } catch(err) {
-        console.error(err);
-        alert("取得當日營業額失敗");
-    }
-};
-// ===== 刪除商品 =====
-function removeItem(i) { posCart.splice(i, 1); renderCart(); }
-
-// ===== 編輯數量/折扣/收現 =====
-document.getElementById("discount").onclick = () => openEditModal(null, 'discount');
-document.getElementById("cashInput").onclick = () => openEditModal(null, 'cash');
-
-function openEditModal(index, field) {
-    editIndex = index; editingField = field; modalType = field;
-    document.getElementById("promoButtons").style.display = 'none';
-    document.getElementById("numpad").style.display = 'grid';
-    let value = (field === 'discount' ? document.getElementById("discount").value
-        : field === 'cash' ? document.getElementById("cashInput").value
-            : posCart[index][field]);
-    document.getElementById("modalInput").value = value;
-    document.getElementById("modalProductName").innerText = field === 'cash' ? '收現金' : field === 'discount' ? '折扣' : '輸入';
-    document.getElementById("editModal").style.display = "flex";
-}
-
-function openPromoModal(item) {
-    modalType = 'promo'; editIndex = null;
-    document.getElementById("numpad").style.display = 'none';
-    const promoDiv = document.getElementById("promoButtons");
-    promoDiv.style.display = 'grid';
-    promoDiv.innerHTML = '';
-    const promoList = [
-        { name: '95折', rate: 0.95 }, { name: '9折', rate: 0.9 }, { name: '85折', rate: 0.85 }, { name: '8折', rate: 0.8 },
-        { name: '7折', rate: 0.7 }, { name: '6折', rate: 0.6 }, { name: '買一送一', type: '買一送一' }, { name: '買二送一', type: '買二送一' },
-        { name: '第二件減10', type: '第二件減10' }, { name: '第二件6折', type: '第二件6折' }
-    ];
-    promoList.forEach(p => {
-        const btn = document.createElement('button');
-        btn.innerText = p.name;
-        btn.onclick = () => {
-            let idx = posCart.findIndex(x => x.name === item.name);
-            if (idx === -1) addPOSItem(item);
-            idx = posCart.findIndex(x => x.name === item.name);
-            if (p.type) posCart[idx].discount = { type: p.type };
-            else posCart[idx].discount = { rate: p.rate, type: '折扣' };
-            closeModal(); renderCart();
-        };
-        promoDiv.appendChild(btn);
-    });
-    document.getElementById("modalProductName").innerText = item.name;
-    document.getElementById("editModal").style.display = 'flex';
-    document.getElementById("editModal").classList.add("promoMode");
-}
-
-function np(v) {
-    let input = document.getElementById("modalInput");
-    input.value = (input.value === '0' && v !== '.') ? v : input.value + v;
-}
-
-function backspace() {
-    let input = document.getElementById("modalInput");
-    input.value = input.value.slice(0, -1);
-    if (input.value === '') input.value = '0';
-}
-
-function confirmEdit() {
-    let val = document.getElementById("modalInput").value;
-    if (editIndex !== null && editingField === 'quantity' && posCart[editIndex].unit === '斤') {
-        const parts = val.split('.');
-        let j = Number(parts[0]) || 0;
-        let l = Number(parts[1]) || 0;
-        let q = Number(parts[2]) || 0;
-        let totalQty = j + l / 16 + q / 160;
-        posCart[editIndex].quantity = totalQty;
-    } else {
-        let v = Number(val);
-        if (modalType === 'discount') document.getElementById("discount").value = v;
-        else if (modalType === 'cash') document.getElementById("cashInput").value = v;
-        else if (editIndex !== null) posCart[editIndex][editingField] = v;
-    }
-    closeModal(); renderCart();
-}
-
-function closeModal() {
-    document.getElementById("editModal").style.display = 'none';
-    editIndex = null; editingField = null; modalType = null;
-    document.getElementById("editModal").classList.remove("promoMode");
-}
-
-function setTax(t) {
-    currentTax = t;
-    document.getElementById("taxIncluded").classList.toggle('active', t === "應稅");
-    document.getElementById("taxExempt").classList.toggle('active', t === "免稅");
-    renderCart();
-}
-
-function updateChange() {
-    let cash = Number(document.getElementById("cashInput").value) || 0;
-    let total = Number(document.getElementById("posTotal").innerText) || 0;
-    document.getElementById("changeOut").innerText = Math.max(0, cash - total).toFixed(0);
-}
-
-function formatDiscountRate(rate) {
-    let d = rate * 100;          // 0.9 → 90
-    let s = d.toString();        // "90"
-
-    // 90 → 9, 80 → 8, 70 → 7...
-    if (d % 10 === 0) {
-        s = (d / 10).toString();
-    }
-    return s + "折";
-}
-  
-  
-function calcDiscountedSubtotal(item) {
-    let sub = item.quantity * item.price;
-    if (item.discount) {
-        switch (item.discount.type) {
-            case "第二件減10":
-                sub -= Math.floor(item.quantity / 2) * 10;
-                break;
-            case "買二送一":
-                sub -= Math.floor(item.quantity / 3) * item.price;
-                break;
-            case "買一送一":
-                sub -= Math.floor(item.quantity / 2) * item.price;
-                break;
-            case "第二件6折":
-                sub -= Math.floor(item.quantity / 2) * item.price * 0.4;
-                break;
-            case "折扣":      // 例如 95折、9折
-                sub *= item.discount.rate;
-                break;
-        }
-    }
-    return Math.round(sub);
-}
-
-  async function sendCheckoutToSheet() {
-
-    const now = new Date();
-
-    const payload = {
-        orderDate: now.toLocaleDateString("zh-TW"),
-        orderTime: now.toLocaleTimeString("zh-TW", { hour12: false }),
-        checkoutDateTime: now.toLocaleString("zh-TW", { hour12: false }),
-
-        storeName: document.getElementById("storeInfo").innerText.split("（")[0],
-        storeCode: POS_STORE,
-
-        taxStatus: currentTax,
-        taxAmount: Number(document.getElementById("taxAmount").innerText),
-        totalAmount: Number(document.getElementById("posTotal").innerText),
-        paymentMethod: document.getElementById("posPayment").value,
-        discount: Number(document.getElementById("discount").value) || 0,
-        cashReceive: Number(document.getElementById("cashInput").value) || 0,
-        change: Number(document.getElementById("changeOut").innerText) || 0,
-
-        items: posCart.map(it => {
-
-            // ① 小計（折扣後）
-            const discountedSubtotal = calcDiscountedSubtotal(it);
-
-            // ② 折扣文字（ex: 95折 / 買二送一）
-            let promoText = "";
-            if (it.discount) {
-                if (it.discount.type === "折扣") {
-                    promoText = formatDiscountRate(it.discount.rate);
-
-
-                } else {
-                    promoText = it.discount.type;
-                }
-            }
-
-            return {
-                category: products.find(p => p["商品名稱"] === it.name)?.["類別"] || "",
-                name: it.name,
-                quantity: it.quantity,
-                price: it.price,
-
-                // 寫入試算表的：折扣後小計
-                subtotal: discountedSubtotal,
-
-                // 寫入試算表的折扣名稱
-                promo: promoText
-            };
-        })
-    };
-
-    await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-    });
-}
-
-
 
 // ===== 小票列印 =====
 document.getElementById("posCheckout").onclick = async function () {
@@ -631,9 +405,7 @@ document.getElementById("posCheckout").onclick = async function () {
                 case "買二送一": sub -= Math.floor(item.quantity / 3) * item.price; discountText = "買二送一"; break;
                 case "買一送一": sub -= Math.floor(item.quantity / 2) * item.price; discountText = "買一送一"; break;
                 case "第二件6折": sub -= Math.floor(item.quantity / 2) * item.price * 0.4; discountText = "第二件6折"; break;
-                default: sub *= item.discount.rate || 1; discountText = formatDiscountRate(item.discount.rate);
-;
-; break;
+                default: sub *= item.discount.rate || 1; discountText = formatDiscountRate(item.discount.rate); break;
             }
         }
         let lines = [];
@@ -700,7 +472,6 @@ document.getElementById("posCheckout").onclick = async function () {
     document.getElementById("changeOut").textContent = "0";
     renderCart();
 };
-
 </script>
 
 </body>
