@@ -136,177 +136,196 @@ button{cursor:pointer;outline:none;transition:0.2s;}
 <div id="printArea"></div>
 
 <script>
+<script>
 document.addEventListener("DOMContentLoaded", () => {
-  const API_URL = "https://script.google.com/macros/s/AKfycbwGYOcjCbZSFu9UYWXZFXGawpfuEWQWPVFnfxpERzkBcv2RMK4QL2T0imUufHXbQVBp/exec";
-  let POS_STORE = "";
-  let posCart = [], currentTax = "應稅";
-  let products = [], categories = [];
+    const API_URL = "https://script.google.com/macros/s/AKfycbwGYOcjCbZSFu9UYWXZFXGawpfuEWQWPVFnfxpERzkBcv2RMK4QL2T0imUufHXbQVBp/exec";
+    let POS_STORE = "";
+    let posCart = [], currentTax = "應稅";
+    let products = [], categories = [];
+    let editIndex = null, editingField = null, modalType = null;
 
-  // ====== 取得 IP (含快取) ======
-  async function getIP() {
-    const cache = sessionStorage.getItem("myIP");
-    if (cache) return cache;
-    try {
-      const res = await fetch("https://api.ipify.org?format=json");
-      const data = await res.json();
-      sessionStorage.setItem("myIP", data.ip);
-      return data.ip;
-    } catch { return ""; }
-  }
+    // ====== 取得 IP (含快取) ======
+    async function getIP() {
+        const cache = sessionStorage.getItem("myIP");
+        if (cache) return cache;
+        try {
+            const res = await fetch("https://api.ipify.org?format=json");
+            const data = await res.json();
+            sessionStorage.setItem("myIP", data.ip);
+            return data.ip;
+        } catch {
+            return "";
+        }
+    }
 
-  // ===== 更新登入時間 =====
-  function updateLoginTime() {
-    const now = new Date();
-    const elem = document.getElementById("loginTime");
-    if(elem) elem.innerText = `登入時間：${now.toLocaleString("zh-TW",{hour12:false})}`;
-  }
+    // ===== 更新登入時間 =====
+    function updateLoginTime() {
+        const now = new Date();
+        const elem = document.getElementById("loginTime");
+        if (elem) elem.innerText = `登入時間：${now.toLocaleString("zh-TW",{hour12:false})}`;
+    }
 
-  // ===== 登入 =====
-  async function login() {
-    const loginBtn = document.getElementById("loginBtn");
-    if(!loginBtn) return;
+    // ===== 登入 =====
+    async function login() {
+        const loginBtn = document.getElementById("loginBtn");
+        if (!loginBtn) return;
 
-    loginBtn.innerText = "登入中...";
-    loginBtn.disabled = true;
+        loginBtn.innerText = "登入中...";
+        loginBtn.disabled = true;
 
-    const store = document.getElementById("storeInput")?.value || "";
-    const pwd = document.getElementById("passwordInput")?.value || "";
-    const userIP = await getIP();
+        const store = document.getElementById("storeInput")?.value || "";
+        const pwd = document.getElementById("passwordInput")?.value || "";
+        const userIP = await getIP();
 
-    try {
-      const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`);
-      const data = await res.json();
+        try {
+            const res = await fetch(`${API_URL}?action=login&store=${store}&pwd=${pwd}&ip=${userIP}`);
+            const data = await res.json();
 
-      if (data.status === "success") {
-        POS_STORE = data.storeCode;
+            if (data.status === "success") {
+                POS_STORE = data.storeCode;
 
-        // 隱藏登入頁，顯示 POS
+                const loginPage = document.getElementById("loginPage");
+                const posApp = document.getElementById("posApp");
+                if (loginPage) loginPage.style.display = "none";
+                if (posApp) posApp.style.display = "flex";
+
+                const storeInfoElem = document.getElementById("storeInfo");
+                if (storeInfoElem) storeInfoElem.innerText = `${data.storeName}（${data.storeCode}）`;
+
+                updateLoginTime();
+                setInterval(updateLoginTime, 1000);
+
+                fetchProducts?.();
+            } else {
+                const loginMsg = document.getElementById("loginMsg");
+                if (loginMsg) loginMsg.innerText = data.message;
+                loginBtn.innerText = "登入";
+                loginBtn.disabled = false;
+            }
+        } catch (err) {
+            console.error(err);
+            const loginMsg = document.getElementById("loginMsg");
+            if (loginMsg) loginMsg.innerText = "登入失敗，請稍後再試";
+            loginBtn.innerText = "登入";
+            loginBtn.disabled = false;
+        }
+    }
+
+    // ===== 登出 =====
+    async function logout() {
+        const now = new Date();
+        const logoutTime = now.toLocaleString("zh-TW", { hour12: false });
+        try {
+            await fetch(`${API_URL}?action=logout&store=${POS_STORE}&time=${encodeURIComponent(logoutTime)}`);
+        } catch (err) {
+            console.error(err);
+        }
+
         const loginPage = document.getElementById("loginPage");
         const posApp = document.getElementById("posApp");
-        if(loginPage) loginPage.style.display = "none";
-        if(posApp) posApp.style.display = "flex";
+        if (posApp) posApp.style.display = "none";
+        if (loginPage) loginPage.style.display = "flex";
 
-        document.getElementById("storeInfo").innerText = `${data.storeName}（${data.storeCode}）`;
+        const storeInput = document.getElementById("storeInput");
+        const passwordInput = document.getElementById("passwordInput");
+        if (storeInput) storeInput.value = "";
+        if (passwordInput) passwordInput.value = "";
 
-        updateLoginTime();
-        setInterval(updateLoginTime, 1000);
+        const loginMsg = document.getElementById("loginMsg");
+        if (loginMsg) loginMsg.innerText = "";
 
-        fetchProducts();
-      } else {
-        document.getElementById("loginMsg").innerText = data.message;
-        loginBtn.innerText = "登入";
-        loginBtn.disabled = false;
-      }
-    } catch (err) {
-      console.error(err);
-      document.getElementById("loginMsg").innerText = "登入失敗，請稍後再試";
-      loginBtn.innerText = "登入";
-      loginBtn.disabled = false;
-    }
-  }
-
-  // ===== 登出 =====
-  async function logout() {
-    const now = new Date();
-    const logoutTime = now.toLocaleString("zh-TW",{hour12:false});
-    try { await fetch(`${API_URL}?action=logout&store=${POS_STORE}&time=${encodeURIComponent(logoutTime)}`); } 
-    catch(err){ console.error(err); }
-
-    const loginPage = document.getElementById("loginPage");
-    const posApp = document.getElementById("posApp");
-    if(posApp) posApp.style.display = "none";
-    if(loginPage) loginPage.style.display = "flex";
-
-    document.getElementById("storeInput").value = "";
-    document.getElementById("passwordInput").value = "";
-    document.getElementById("loginMsg").innerText = "";
-
-    const loginBtn = document.getElementById("loginBtn");
-    if(loginBtn){ loginBtn.innerText = "登入"; loginBtn.disabled = false; }
-
-    POS_STORE = "";
-  }
-
-  // ===== 綁定按鈕事件 =====
-  const loginBtn = document.getElementById("loginBtn");
-  if(loginBtn) loginBtn.addEventListener("click", login);
-
-  const logoutBtn = document.getElementById("logoutBtn");
-  if(logoutBtn) logoutBtn.addEventListener("click", logout);
-
-  const shiftEndBtn = document.getElementById("shiftEndBtn");
-  if(shiftEndBtn) shiftEndBtn.addEventListener("click", async () => {
-    if (posCart.length > 0 && !confirm("購物車尚有未結帳商品，是否仍交班？")) return;
-    const now = new Date();
-    const payload = {
-      storeCode: POS_STORE,
-      storeName: document.getElementById("storeInfo")?.innerText.split("（")[0] || "",
-      shiftDate: now.toLocaleDateString("zh-TW"),
-      shiftEndTime: now.toLocaleTimeString("zh-TW", { hour12: false })
-    };
-    try {
-      const res = await fetch(API_URL + "?action=shiftEnd", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      alert("交班成功！本班營業額：" + (data.total || 0) + " 元");
-      posCart = [];
-      renderCart();
-    } catch(err){
-      console.error(err);
-      alert("交班失敗，請稍後再試");
-    }
-  });
-
-  const todaySalesBtn = document.getElementById("todaySalesBtn");
-  if(todaySalesBtn) todaySalesBtn.addEventListener("click", async () => {
-    try {
-      const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE);
-      const data = await res.json();
-      alert("今日營業額：" + (data.total || 0) + " 元");
-
-      const display = document.getElementById("todaySalesDisplay");
-      if(display) display.innerText = "今日營業額：" + (data.total || 0) + " 元";
-    } catch(err){ console.error(err); }
-  });
-
-  
-// ===== 渲染購物車 =====
-function renderCart() {
-    const box = document.getElementById("posCart"); box.innerHTML = "";
-    let total = 0;
-    posCart.forEach((item, i) => {
-        let sub = item.quantity * item.price;
-        if (item.discount) {
-            switch (item.discount.type) {
-                case "第二件減10": sub -= Math.floor(item.quantity / 2) * 10; break;
-                case "買二送一": sub -= Math.floor(item.quantity / 3) * item.price; break;
-                case "買一送一": sub -= Math.floor(item.quantity / 2) * item.price; break;
-                case "第二件6折": sub -= Math.floor(item.quantity / 2) * item.price * 0.4; break;
-                default: sub *= item.discount.rate || 1; break;
-            }
+        if (document.getElementById("loginBtn")) {
+            document.getElementById("loginBtn").innerText = "登入";
+            document.getElementById("loginBtn").disabled = false;
         }
-        total += sub;
-        const row = document.createElement("div");
-        row.className = "cartRow";
-        row.innerHTML = `<span class="name" onclick="openPromoModal(posCart[${i}])">${item.name}</span>
-            <span class="qty" onclick="openEditModal(${i},'quantity')">${item.quantity.toFixed(2)} ${item.unit}</span>
-            <span class="price" onclick="openEditModal(${i},'price')">${item.price}</span>
-            <span class="subtotal">${sub.toFixed(0)}</span>
-            <span class="remove"><button onclick="removeItem(${i})">刪</button></span>`;
-        box.appendChild(row);
+
+        POS_STORE = "";
+    }
+
+    // ===== 綁定按鈕事件 =====
+    document.getElementById("loginBtn")?.addEventListener("click", login);
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+
+    document.getElementById("shiftEndBtn")?.addEventListener("click", async () => {
+        if (posCart.length > 0 && !confirm("購物車尚有未結帳商品，是否仍交班？")) return;
+        const now = new Date();
+        const payload = {
+            storeCode: POS_STORE,
+            storeName: document.getElementById("storeInfo")?.innerText.split("（")[0] || "",
+            shiftDate: now.toLocaleDateString("zh-TW"),
+            shiftEndTime: now.toLocaleTimeString("zh-TW", { hour12: false })
+        };
+        try {
+            const res = await fetch(API_URL + "?action=shiftEnd", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            alert("交班成功！本班營業額：" + (data.total || 0) + " 元");
+            posCart = [];
+            renderCart();
+        } catch (err) {
+            console.error(err);
+            alert("交班失敗，請稍後再試");
+        }
     });
-    let discountValue = Number(document.getElementById("discount").value) || 0;
-    let taxBase = total - discountValue;
-    let tax = currentTax === "應稅" ? taxBase * 0.05 : 0;
-    document.getElementById("taxAmount").innerText = tax.toFixed(0);
-    document.getElementById("posTotal").innerText = (taxBase + tax).toFixed(0);
-    updateChange();
-}
 
+    document.getElementById("todaySalesBtn")?.addEventListener("click", async () => {
+        try {
+            const res = await fetch(API_URL + "?action=todaySales&storeCode=" + POS_STORE);
+            const data = await res.json();
+            alert("今日營業額：" + (data.total || 0) + " 元");
 
+            const display = document.getElementById("todaySalesDisplay");
+            if (display) display.innerText = "今日營業額：" + (data.total || 0) + " 元";
+        } catch (err) {
+            console.error(err);
+        }
+    });
 
+    // ===== 渲染購物車 =====
+    function renderCart() {
+        const box = document.getElementById("posCart");
+        if (!box) return;
+        box.innerHTML = "";
+        let total = 0;
+
+        posCart.forEach((item, i) => {
+            let sub = item.quantity * item.price;
+            if (item.discount) {
+                switch (item.discount.type) {
+                    case "第二件減10": sub -= Math.floor(item.quantity / 2) * 10; break;
+                    case "買二送一": sub -= Math.floor(item.quantity / 3) * item.price; break;
+                    case "買一送一": sub -= Math.floor(item.quantity / 2) * item.price; break;
+                    case "第二件6折": sub -= Math.floor(item.quantity / 2) * item.price * 0.4; break;
+                    default: sub *= item.discount.rate || 1; break;
+                }
+            }
+            total += sub;
+
+            const row = document.createElement("div");
+            row.className = "cartRow";
+            row.innerHTML = `
+                <span class="name" onclick="openPromoModal(posCart[${i}])">${item.name}</span>
+                <span class="qty" onclick="openEditModal(${i},'quantity')">${item.quantity.toFixed(2)} ${item.unit}</span>
+                <span class="price" onclick="openEditModal(${i},'price')">${item.price}</span>
+                <span class="subtotal">${sub.toFixed(0)}</span>
+                <span class="remove"><button onclick="removeItem(${i})">刪</button></span>
+            `;
+            box.appendChild(row);
+        });
+
+        const discountValue = Number(document.getElementById("discount")?.value) || 0;
+        const taxBase = total - discountValue;
+        const tax = currentTax === "應稅" ? taxBase * 0.05 : 0;
+
+        if (document.getElementById("taxAmount")) document.getElementById("taxAmount").innerText = tax.toFixed(0);
+        if (document.getElementById("posTotal")) document.getElementById("posTotal").innerText = (taxBase + tax).toFixed(0);
+
+        updateChange();
+    }
+
+        
 // ===== 刪除商品 =====
 function removeItem(i) { posCart.splice(i, 1); renderCart(); }
 
