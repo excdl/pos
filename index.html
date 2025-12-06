@@ -486,7 +486,8 @@ function calcDiscountedSubtotal(item) {
             let promoText = "";
             if (it.discount) {
                 if (it.discount.type === "折扣") {
-                    promoText = `${(it.discount.rate * 100).toFixed(0)}折`;
+                    promoText = `${(it.discount.rate * 100).toString().replace(/\.0+$/, "")}折`;
+
                 } else {
                     promoText = it.discount.type;
                 }
@@ -595,7 +596,7 @@ document.getElementById("posCheckout").onclick = async function () {
         content += "-".repeat(maxNameLen + maxQtyLen + maxPriceLen + maxSubtotalLen + 3) + "\n";
 
         content += padRight("折扣總額:", maxNameLen + maxQtyLen) + padLeft(document.getElementById("discount").value || 0, maxPriceLen + maxSubtotalLen + 1) + " 元\n";
-        content += padRight("稅金:", maxNameLen + maxQtyLen) + padLeft(currentTax === "應稅" ? 5 + '%' : '0%', maxPriceLen + maxSubtotalLen + 1) + "\n";
+        content += padRight("稅金:", maxNameLen + maxQtyLen) +padLeft(document.getElementById("taxAmount").innerText, maxPriceLen + maxSubtotalLen + 1) + " 元\n";
         content += padRight("總額:", maxNameLen + maxQtyLen) + padLeft(document.getElementById("posTotal").innerText, maxPriceLen + maxSubtotalLen + 1) + " 元\n";
         content += padRight("付款方式:", maxNameLen + maxQtyLen) + document.getElementById("posPayment").value + "\n";
 
