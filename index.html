@@ -433,6 +433,19 @@ function updateChange() {
     let total = Number(document.getElementById("posTotal").innerText) || 0;
     document.getElementById("changeOut").innerText = Math.max(0, cash - total).toFixed(0);
 }
+
+function formatDiscountRate(rate) {
+    let d = rate * 100;          // 0.9 → 90
+    let s = d.toString();        // "90"
+
+    // 90 → 9, 80 → 8, 70 → 7...
+    if (d % 10 === 0) {
+        s = (d / 10).toString();
+    }
+    return s + "折";
+}
+  
+  
 function calcDiscountedSubtotal(item) {
     let sub = item.quantity * item.price;
     if (item.discount) {
