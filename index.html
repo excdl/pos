@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qz-tray/2.1.0/qz-tray.js"></script>
+
 <title>台灣生鮮 POS 系統</title>
 <style>
 body{margin:0;font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f5f5f5;}
@@ -623,9 +625,13 @@ function calcDiscountedSubtotal(item) {
         body: JSON.stringify(payload)
     });
 }
-// ===== 小票列印 =====
+// ===== 小票列印（WP-T810 自動列印版） =====
 document.getElementById("posCheckout").onclick = async function () {
 
+    if (posCart.length === 0) {
+        alert("購物車是空的。");
+        return;
+    }
     // Step 1：寫入 Google Sheet
     await sendCheckoutToSheet();
 
@@ -717,18 +723,39 @@ document.getElementById("posCheckout").onclick = async function () {
         return content;
     }
 
-    // Step 3：列印
-    const receiptContent = formatReceipt();
-    const printWindow = window.open('', '', 'width=300,height=600');
-    printWindow.document.write('<pre style="font-family:monospace;font-size:12px;line-height:1.2;">' + receiptContent + '</pre>');
-    printWindow.document.write('<script>window.onload=function(){window.print();};<\/script>');
-    printWindow.document.close();
+    // Step 3：組 ESC/POS 指令，符合 WP-T810
+    const esc = [];
 
-    // Step 4：清空購物車
+    esc.push('\x1B\x40');           // 初始化印表機
+    esc.push('\x1B\x61\x01');       // 置中
+    esc.push("生鮮 POS 小票\n");
+    esc.push('\x1B\x61\x00');       // 靠左
+
+    esc.push(receiptText + "\n");  // 你的小票內容
+
+    esc.push('\x1B\x64\x02');       // 捲紙 2 行
+    esc.push('\x1B\x70\x00\x3C\xFF'); // ★ 開錢櫃（如不需要可刪）
+    esc.push('\x1D\x56\x42\x03');   // 切紙 WP-T810 支援
+
+    // Step 4：透過 QZ Tray 自動列印，不跳視窗
+    qz.print({
+        printer: "default"  // 使用系統預設印表機（WP-T810）
+    }, [{
+        type: 'raw',
+        format: 'plain',
+        data: esc.join("")
+    }])
+    .then(() => console.log("列印成功"))
+    .catch(err => {
+        console.error(err);
+        alert("列印失敗：請確認 QZ Tray 是否已啟動，並允許本網站列印。");
+    });
+
+    // Step 5：清空購物車
     posCart = [];
     document.getElementById("discount").value = "0";
     document.getElementById("cashInput").value = "";
-    document.getElementById("changeOut").textContent = "0";
+    document.getElementById("changeOut").innerText = "0";
     renderCart();
 };
 </script>
