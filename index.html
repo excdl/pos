@@ -375,20 +375,31 @@ async function updateTodaySales() {
                      String(now.getMonth() + 1).padStart(2, "0") + "/" +
                      String(now.getDate()).padStart(2, "0");
 
-  const res = await fetch(`${API_URL}?action=todaySales&storeCode=${POS_STORE}&date=${formatDate}`);
-  const data = await res.json();
+  try {
+    const res = await fetch(`${API_URL}?action=todaySales&storeCode=${POS_STORE}&date=${formatDate}`);
+    const data = await res.json();
 
-  if(data.status === "success") {
-    document.getElementById("todaySalesDisplay").innerText =
-      `今日營業額：
-總額：${data.total} 元
-現金：${data.cash} 元
-信用卡：${data.credit} 元
-Line Pay：${data.linePay} 元`;
-  } else {
-    console.error("取得今日營業額失敗：", data.message);
+    if(data.status === "success") {
+      document.getElementById("todaySalesDisplay").innerText =
+        `今日營業額：
+總額：${data.total.toFixed(2)} 元
+現金：${data.cash.toFixed(2)} 元
+信用卡：${data.credit.toFixed(2)} 元
+Line Pay：${data.linePay.toFixed(2)} 元`;
+    } else {
+      console.error("取得今日營業額失敗：", data.message);
+    }
+  } catch (err) {
+    console.error("更新今日營業額時發生錯誤：", err);
   }
 }
+
+// 每 10 秒自動刷新一次
+setInterval(updateTodaySales, 30000);
+
+// 頁面載入立即更新一次
+updateTodaySales();
+
 
 // 交班按鈕
 document.getElementById("shiftEndBtn").onclick = async function() {
@@ -646,6 +657,7 @@ document.getElementById("posCheckout").onclick = async function () {
 
     // Step 1：結帳寫入試算表（永遠優先、一定執行）
     await sendCheckoutToSheet();
+    updateTodaySales();   
     // Step 2：格式化小票內容
     function getMaxLength() {
         let maxNameLen = 0, maxQtyLen = 0, maxPriceLen = 0, maxSubtotalLen = 0;
