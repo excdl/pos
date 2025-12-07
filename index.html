@@ -733,29 +733,7 @@ document.getElementById("posCheckout").onclick = async function () {
         return content;
     }
 
-   // ===== 印表機狀態檢查（不影響結帳）=====
-async function printerIsReady() {
-    try {
-        const printers = await qz.printers.find();
-        return (printers && printers.length > 0);
-    } catch (e) {
-        return false;
-    }
-}
-
-// ===== 結帳：先入帳 → 再嘗試列印 =====
-document.getElementById("posCheckout").onclick = async function () {
-
-    if (posCart.length === 0) {
-        alert("購物車是空的。");
-        return;
-    }
-
-    // Step 1：結帳寫入試算表（永遠優先、一定執行）
-    await sendCheckoutToSheet();
-
-    // Step 2：準備小票字串
-    const receiptText = formatReceipt();
+ 
 
     // Step 3：清空購物車（不受列印影響）
     posCart = [];
