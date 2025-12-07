@@ -382,10 +382,10 @@ async function updateTodaySales() {
     if(data.status === "success") {
       document.getElementById("todaySalesDisplay").innerText =
         `今日營業額：
-總額：${data.total.toFixed(2)} 元
-現金：${data.cash.toFixed(2)} 元
-信用卡：${data.credit.toFixed(2)} 元
-Line Pay：${data.linePay.toFixed(2)} 元`;
+總額：${data.total.toFixed(0)} 元
+現金：${data.cash.toFixed(0)} 元
+信用卡：${data.credit.toFixed(0)} 元
+Line Pay：${data.linePay.toFixed(0)} 元`;
     } else {
       console.error("取得今日營業額失敗：", data.message);
     }
