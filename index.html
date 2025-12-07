@@ -625,16 +625,26 @@ function calcDiscountedSubtotal(item) {
         body: JSON.stringify(payload)
     });
 }
-// ===== 小票列印（WP-T810 自動列印版） =====
+// ===== 印表機狀態檢查（不影響結帳）=====
+async function printerIsReady() {
+    try {
+        const printers = await qz.printers.find();
+        return (printers && printers.length > 0);
+    } catch (e) {
+        return false;
+    }
+}
+
+// ===== 結帳：先入帳 → 再嘗試列印 =====
 document.getElementById("posCheckout").onclick = async function () {
 
     if (posCart.length === 0) {
         alert("購物車是空的。");
         return;
     }
-    // Step 1：寫入 Google Sheet
-    await sendCheckoutToSheet();
 
+    // Step 1：結帳寫入試算表（永遠優先、一定執行）
+    await sendCheckoutToSheet();
     // Step 2：格式化小票內容
     function getMaxLength() {
         let maxNameLen = 0, maxQtyLen = 0, maxPriceLen = 0, maxSubtotalLen = 0;
@@ -723,41 +733,69 @@ document.getElementById("posCheckout").onclick = async function () {
         return content;
     }
 
-    // Step 3：組 ESC/POS 指令，符合 WP-T810
-    const esc = [];
+   // ===== 印表機狀態檢查（不影響結帳）=====
+async function printerIsReady() {
+    try {
+        const printers = await qz.printers.find();
+        return (printers && printers.length > 0);
+    } catch (e) {
+        return false;
+    }
+}
 
-    esc.push('\x1B\x40');           // 初始化印表機
-    esc.push('\x1B\x61\x01');       // 置中
-    esc.push("生鮮 POS 小票\n");
-    esc.push('\x1B\x61\x00');       // 靠左
+// ===== 結帳：先入帳 → 再嘗試列印 =====
+document.getElementById("posCheckout").onclick = async function () {
 
-    esc.push(receiptText + "\n");  // 你的小票內容
+    if (posCart.length === 0) {
+        alert("購物車是空的。");
+        return;
+    }
 
-    esc.push('\x1B\x64\x02');       // 捲紙 2 行
-    esc.push('\x1B\x70\x00\x3C\xFF'); // ★ 開錢櫃（如不需要可刪）
-    esc.push('\x1D\x56\x42\x03');   // 切紙 WP-T810 支援
+    // Step 1：結帳寫入試算表（永遠優先、一定執行）
+    await sendCheckoutToSheet();
 
-    // Step 4：透過 QZ Tray 自動列印，不跳視窗
-    qz.print({
-        printer: "default"  // 使用系統預設印表機（WP-T810）
-    }, [{
-        type: 'raw',
-        format: 'plain',
-        data: esc.join("")
-    }])
-    .then(() => console.log("列印成功"))
-    .catch(err => {
-        console.error(err);
-        alert("列印失敗：請確認 QZ Tray 是否已啟動，並允許本網站列印。");
-    });
+    // Step 2：準備小票字串
+    const receiptText = formatReceipt();
 
-    // Step 5：清空購物車
+    // Step 3：清空購物車（不受列印影響）
     posCart = [];
     document.getElementById("discount").value = "0";
     document.getElementById("cashInput").value = "";
     document.getElementById("changeOut").innerText = "0";
     renderCart();
+
+    // Step 4：檢查印表機是否存在
+    const ready = await printerIsReady();
+
+    if (!ready) {
+        //  ⚠️ 印表機沒連線（不影響結帳）
+        alert("⚠️ 結帳成功，但未偵測到印表機。\n請檢查印表機後再補印小票。");
+        return;
+    }
+
+    // Step 5：組 ESC/POS 指令（WP-T810 相容）
+    const esc = [];
+    esc.push('\x1B\x40');         // 初始化
+    esc.push('\x1B\x61\x01');     // 置中
+    esc.push("生鮮 POS 小票\n");
+    esc.push('\x1B\x61\x00');     // 靠左
+    esc.push(receiptText + "\n");
+    esc.push('\x1B\x64\x02');     // 捲紙
+    esc.push('\x1B\x70\x00\x3C\xFF'); // 開錢櫃（可刪）
+    esc.push('\x1D\x56\x42\x03'); // 切紙
+
+    // Step 6：嘗試列印
+    qz.print({ printer: "default" }, [{
+        type: 'raw',
+        format: 'plain',
+        data: esc.join("")
+    }])
+    .catch(err => {
+        console.error(err);
+        alert("⚠️ 結帳成功，但列印失敗。\n請檢查印表機後再補印小票。");
+    });
 };
+
 </script>
 
 </body>
