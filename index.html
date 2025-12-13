@@ -1294,7 +1294,7 @@ async function printerIsReady() {
     }
 }
 
-// ===== 結帳：先入帳 → 再嘗試列印到多台印表機 ===== 
+// ===== 結帳：先入帳 → 再嘗試列印到自動抓取的印表機 ===== 
 document.getElementById("posCheckout").onclick = async function () {
 
     if (posCart.length === 0) {
@@ -1306,13 +1306,13 @@ document.getElementById("posCheckout").onclick = async function () {
     await sendCheckoutToSheet();
     updateTodaySales();
 
-    // ===== 自動偵測紙張寬度 =====
+    // ===== 自動偵測紙張寬度設定 =====
     const PRINTER_PROFILE = {
         "58": {charsPerLine:32,nameWidth:14,qtyWidth:6,priceWidth:6,subWidth:6},
         "80": {charsPerLine:42,nameWidth:20,qtyWidth:6,priceWidth:8,subWidth:8}
     };
 
-    // ===== JSON 小票 =====
+    // ===== 準備小票資料 =====
     const receiptPayload = {
         storeName: "生鮮 POS",
         datetime: new Date().toLocaleString(),
@@ -1360,7 +1360,7 @@ document.getElementById("posCheckout").onclick = async function () {
         }
     };
 
-    // ===== 生成小票文字 =====
+    // ===== 小票文字產生函式 =====
     function pad(str,len,right=false){ str=str.toString(); return right? str+' '.repeat(len-str.length):' '.repeat(len-str.length)+str; }
     function center(str,total){ let padLen=Math.floor((total-str.length)/2); return ' '.repeat(padLen)+str; }
     function splitText(text,maxWidth){ let lines=[],line=""; for(const ch of text){ const w=ch.charCodeAt(0)>255?2:1; if(line.length+w>maxWidth){lines.push(line); line=ch;} else line+=ch;} if(line) lines.push(line); return lines; }
@@ -1401,37 +1401,40 @@ document.getElementById("posCheckout").onclick = async function () {
     if(document.getElementById("changeOut")) document.getElementById("changeOut").innerText="0";
     if(typeof renderCart==="function") renderCart();
 
-    // ===== Step 3：列印到多台印表機 =====
-    const printersToPrint = ["POS-58mm","POS-80mm"]; // 可填多台名稱
-    for(const printerName of printersToPrint){
-        let selectedSize="58";
-        if(/80/.test(printerName)) selectedSize="80";
-        const p = PRINTER_PROFILE[selectedSize];
-        const receiptText = buildReceiptText(receiptPayload,p);
-        const esc = [];
-        esc.push('\x1B\x40');         // 初始化
-        esc.push('\x1B\x61\x01');     // 置中
-        esc.push("生鮮 POS 小票\n");
-        esc.push('\x1B\x61\x00');     // 靠左
-        esc.push(receiptText+"\n");
-        esc.push('\x1B\x64\x02');     // 捲紙
-        esc.push('\x1B\x70\x00\x3C\xFF'); // 開錢櫃
-        esc.push('\x1D\x56\x42\x03'); // 切紙
-
+    // ===== Step 3：抓取 QZ Tray 所有印表機並列印 =====
+    if(window.qz){
         try{
-            if(window.qz){
+            const printers = await qz.printers.find(); // 取得所有印表機
+            for(const printerName of printers){
+                let selectedSize="58";
+                if(/80/.test(printerName)) selectedSize="80";
+                const profile = PRINTER_PROFILE[selectedSize];
+                const receiptText = buildReceiptText(receiptPayload,profile);
+                const esc = [];
+                esc.push('\x1B\x40');         // 初始化
+                esc.push('\x1B\x61\x01');     // 置中
+                esc.push("生鮮 POS 小票\n");
+                esc.push('\x1B\x61\x00');     // 靠左
+                esc.push(receiptText+"\n");
+                esc.push('\x1B\x64\x02');     // 捲紙
+                esc.push('\x1B\x70\x00\x3C\xFF'); // 開錢櫃
+                esc.push('\x1D\x56\x42\x03'); // 切紙
                 const config = qz.configs.create(printerName);
                 await qz.print(config,[{type:'raw',format:'command',data:esc.join('')}]);
-            } else if(window.webkit?.messageHandlers?.posPrint){
-                window.webkit.messageHandlers.posPrint.postMessage(receiptPayload);
+                console.log(`列印完成: ${printerName}`);
             }
-            console.log(`列印完成: ${printerName}`);
         }catch(err){
-            console.error(`列印失敗: ${printerName}`,err);
+            console.error("列印失敗",err);
+            alert("⚠️ 結帳成功，但列印失敗，請檢查印表機。");
         }
+    } else if(window.webkit?.messageHandlers?.posPrint){
+        // iPad WebView 傳送小票給原生列印
+        window.webkit.messageHandlers.posPrint.postMessage(receiptPayload);
     }
-    alert("結帳完成，列印完成或已嘗試列印多台印表機");
+
+    alert("結帳完成，已嘗試列印所有印表機");
 };
+
   
 
 </script>
